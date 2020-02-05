@@ -9,3 +9,10 @@ handlers:
 
 env_variables:
   PROJECT_ID: mask-9999
+  CLOUDSQL_CONNECTION_NAME: mask-9999:asia-east2:health-insurance-special-pharmacy
+  # Replace username and password if you aren't using the root user.
+  CLOUDSQL_USER: postgres
+  CLOUDSQL_PASSWORD: password
+
+beta_settings:
+  cloud_sql_instances: mask-9999:asia-east2:health-insurance-special-pharmacy

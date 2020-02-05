@@ -1,20 +1,13 @@
 ACCOUNT = cage.chung@gmail.com
 PROJECT = mask-9999
 # VERSION = 4c833b1makm
-VERSION = 1
+VERSION = 3
 
 NODE_BIN = $(shell npm bin)
 
 set_config:
 	gcloud config set account $(ACCOUNT)
 	gcloud config set project $(PROJECT)
-
-#endpoint api
-install_endpoints:
-	cd endpoints && make install_endpoints
-
-gen_openapi_spec:
-	cd endpoints && make gen_openapi_spec PROJECT=$(PROJECT)
 
 run:
 	dev_appserver.py \
@@ -37,11 +30,21 @@ update_ownership:
 
 update_dispatch:
 	gcloud app deploy --version=$(VERSION)  dispatch.yaml --project $(PROJECT) -q
-	# gcloud app deploy --version=$(VERSION)  dispatch.yaml --project $(PROJECT) -q
 
 update: update_frontend update_endpoints update_ownership update_dispatch
 # update: update_frontend update_endpoints
 
 test:
-	## Request
-	curl -X POST https://endpoint-dot-mask-9999.appspot.com/stores
+	curl -X POST http://localhost:8080/stores \
+		-H 'Content-Type: application/json; charset=utf-8' \
+		--data-binary @"test.json" | jq
+
+aa:
+	curl -X POST https://endpoint-dot-mask-9999.appspot.com/stores \
+		-H 'Content-Type: application/json; charset=utf-8' \
+		--data-binary @"test.json"
+
+bb:
+	curl -X POST https://3-dot-endpoint-dot-mask-9999.appspot.com/stores \
+		-H 'Content-Type: application/json; charset=utf-8' \
+		--data-binary @"test.json"		
