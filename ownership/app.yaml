@@ -1,0 +1,3 @@
+service: ownership
+
+runtime: go111

@@ -1,0 +1,13 @@
+service: default
+
+runtime: go111
+
+handlers:
+- url: /.*
+  script: auto
+  secure: always
+
+nobuild_files:
+  - node_modules
+  - src
+  - public

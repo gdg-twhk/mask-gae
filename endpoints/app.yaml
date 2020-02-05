@@ -1,0 +1,11 @@
+service: endpoint
+
+runtime: go111
+
+handlers:
+- url: /.*
+  script: auto
+  secure: always
+
+env_variables:
+  PROJECT_ID: mask-9999

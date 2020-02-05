@@ -1,0 +1,4 @@
+github.com/go-zoo/bone v1.3.0 h1:PY6sHq37FnQhj+4ZyqFIzJQHvrrGx0GEc3vTZZC/OsI=
+github.com/go-zoo/bone v1.3.0/go.mod h1:HI3Lhb7G3UQcAwEhOJ2WyNcsFtQX1WYHa0Hl4OBbhW8=
+github.com/rs/cors v1.7.0 h1:+88SsELBHx5r+hZ8TCkggzSstaWNbDvThkVK8H6f9ik=
+github.com/rs/cors v1.7.0/go.mod h1:gFx+x8UowdsKA9AchylcLynDq+nNFfI8FkUZdN/jGCU=
