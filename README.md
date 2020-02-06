@@ -1,6 +1,7 @@
-pubsub topic: projects/mask-9999/topics/health-insurance-special-pharmacy-sync
+# mask.goodideas-studio.com 後台
 
-cloud sql instance: health-insurance-special-pharmacy
+## update frontend
 
-
-./cloud_sql_proxy -instances=mask-9999:asia-east2:health-insurance-special-pharmacy=tcp:5432
+- 替換 `frontend/build` 下所有檔案
+- 修改 `makefile` `ACCOUNT` 為有權限的帳號
+- 執行 `make update_frontend`
