@@ -69,7 +69,7 @@ func StoresHandler(w http.ResponseWriter, r *http.Request) {
 			ORDER BY distance limit $7;`
 
 	stroes := []model.Store{}
-	if err := db.Select(&stroes, q, req.Center.Lng, req.Center.Lat, req.Bounds.Sw.Lng, req.Bounds.Ne.Lng, req.Bounds.Se.Lat, req.Bounds.Ne.Lat, req.Max); err != nil {
+	if err := db.Select(&stroes, q, req.Center.Lng, req.Center.Lat, req.Bounds.Sw.Lng, req.Bounds.Ne.Lng, req.Bounds.Sw.Lat, req.Bounds.Ne.Lat, req.Max); err != nil {
 		msg := fmt.Sprintf("db.Query: %v", err)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
@@ -107,7 +107,7 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 	}
 
 	if pr.Updated != "" {
-		expired, err := time.Parse("2006/01/02 15:04", pr.Updated)
+		expired, err := time.Parse("2006/01/02 15:04:05", pr.Updated)
 		if err != nil {
 			return err
 		}
@@ -132,11 +132,21 @@ type Collection struct {
 }
 
 func SyncHandler(w http.ResponseWriter, r *http.Request) {
-	resp, _ := http.Get("https://raw.githubusercontent.com/kiang/pharmacies/master/json/points.json")
+	resp, err := http.Get("https://raw.githubusercontent.com/kiang/pharmacies/master/json/points.json")
+	if err != nil {
+		msg := fmt.Sprintf("fetch points.json: %v", err)
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
 	defer resp.Body.Close()
 
 	var req Collection
-	_ = json.NewDecoder(resp.Body).Decode(&req)
+	err = json.NewDecoder(resp.Body).Decode(&req)
+	if err != nil {
+		msg := fmt.Sprintf("json.NewDecoder decode: %v", err)
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
 
 	q := `INSERT INTO public.stores (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude,
                            updated)
@@ -173,6 +183,6 @@ func SyncHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatalf("db.NamedExec: %v", err)
 		}
 	}
-
+	log.Fatalln("sync done")
 	w.Write([]byte("sync done"))
 }
