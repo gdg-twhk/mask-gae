@@ -16,6 +16,8 @@ func pingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	fs := http.FileServer(http.Dir("mobile"))
+	http.Handle("/mobile/", http.StripPrefix("/mobile/", fs))
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/ping", pingHandler)
 
