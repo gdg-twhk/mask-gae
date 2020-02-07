@@ -13,7 +13,9 @@ func MakeHandler() http.Handler {
 	mux := bone.New()
 
 	mux.PostFunc("/stores", endpoint.StoresHandler)
-	mux.PostFunc("/sync", endpoint.SyncHandler)
+	mux.PostFunc("/sync", endpoint.SyncQueue)
+	mux.PostFunc("/api/sync_handler", endpoint.SyncHandler)
+	mux.PostFunc("/api/sync", endpoint.SyncQueue)
 	mux.GetFunc("/", endpoint.HomeHandler)
 
 	return cors.Default().Handler(mux)

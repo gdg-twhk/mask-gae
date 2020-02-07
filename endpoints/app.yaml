@@ -1,6 +1,8 @@
 service: endpoint
 
-runtime: go111
+runtime: go112
+
+instance_class: F2
 
 handlers:
 - url: /.*

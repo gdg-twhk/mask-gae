@@ -2,11 +2,11 @@ dispatch:
   - url: "*/favicon.ico"
     module: default
 
+  - url: "*/api/*"
+    module: endpoint
+
   - url: "*/googleae8f4bcce8bec00c.html"
     module: ownership
 
   - url: "mask-9999.appspot.com/"
     module: default
-
-  - url: "*/endpoint"
-    module: endpoint    

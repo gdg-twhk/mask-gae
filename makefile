@@ -1,7 +1,7 @@
 ACCOUNT = cage.chung@gmail.com
 PROJECT = mask-9999
 # VERSION = 4c833b1makm
-VERSION = 3
+VERSION = 4
 
 NODE_BIN = $(shell npm bin)
 
@@ -33,6 +33,9 @@ update_dispatch:
 
 update: update_frontend update_endpoints update_ownership update_dispatch
 # update: update_frontend update_endpoints
+
+cloud_sql_proxy:
+	./cloud_sql_proxy -instances=mask-9999:asia-east2:health-insurance-special-pharmacy=tcp:5432
 
 test:
 	curl -X POST http://localhost:8080/stores \
