@@ -247,21 +247,13 @@ func SyncHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("parse points.json ok")
 	log.Println(len(req.Features))
 
-	ql := `INSERT INTO public.stores (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude,
-                           updated)
-		VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :updated)
-		ON CONFLICT (id)
-			DO UPDATE
-			SET name       = :name,
-				phone      = :phone,
-				address    = :address,
-				mask_adult = :mask_adult,
-				mask_child = :mask_child,
-				available  = :available,
-				note       = :note,
-				longitude  = :longitude,
-				latitude   = :latitude,
-				updated    = :updated;`
+
+	if _, err :=db.Exec(`delete from stores`); err != nil {
+		log.Fatalf("delete from stores err: %v", err)
+	}
+
+	ql := `INSERT INTO public.stores (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude, updated)
+		VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :updated)`
 
 	log.Println("features counts ", len(req.Features))
 
