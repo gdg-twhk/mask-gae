@@ -6,7 +6,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 
-	"github.com/cage1016/mask/internal/app/model"
+	"github.com/cage1016/mask/internal/app/storesvc/model"
 )
 
 type loggingMiddleware struct {

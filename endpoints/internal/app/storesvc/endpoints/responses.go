@@ -5,7 +5,7 @@ import (
 
 	httptransport "github.com/go-kit/kit/transport/http"
 
-	"github.com/cage1016/mask/internal/app/model"
+	"github.com/cage1016/mask/internal/app/storesvc/model"
 	"github.com/cage1016/mask/internal/app/storesvc/service"
 	"github.com/cage1016/mask/internal/pkg/responses"
 )
