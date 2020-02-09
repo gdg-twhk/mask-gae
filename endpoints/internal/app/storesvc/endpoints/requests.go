@@ -29,9 +29,18 @@ func (r QueryRequest) validate() error {
 
 // SyncRequest collects the request parameters for the Sync method.
 type SyncRequest struct {
-
 }
 
 func (r SyncRequest) validate() error {
+	return nil // TBA
+}
+
+// SyncHandlerRequest collects the request parameters for the SyncHandler method.
+type SyncHandlerRequest struct {
+	QueueName string `json:"queue_name"`
+	TaskName  string `json:"task_name"`
+}
+
+func (r SyncHandlerRequest) validate() error {
 	return nil // TBA
 }

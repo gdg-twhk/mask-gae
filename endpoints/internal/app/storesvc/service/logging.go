@@ -10,8 +10,8 @@ import (
 )
 
 type loggingMiddleware struct {
-	logger log.Logger
-	next   StoresvcService
+	logger log.Logger      `json:""`
+	next   StoresvcService `json:""`
 }
 
 // LoggingMiddleware takes a logger as a dependency
@@ -36,4 +36,12 @@ func (lm loggingMiddleware) Sync(ctx context.Context) (err error) {
 	}()
 
 	return lm.next.Sync(ctx)
+}
+
+func (lm loggingMiddleware) SyncHandler(ctx context.Context, queueName string, taskName string) (err error) {
+	defer func() {
+		lm.logger.Log("method", "SyncHandler", "queueName", queueName, "taskName", taskName, "err", err)
+	}()
+
+	return lm.next.SyncHandler(ctx, queueName, taskName)
 }

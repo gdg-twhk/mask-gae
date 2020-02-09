@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/cage1016/mask/internal/app/model"
@@ -13,6 +14,8 @@ import (
 var (
 	ErrQueryStoreFromStoresDB   = errors.New("query store from DB failed")
 	ErrInsertOrUpdateToStoresDB = errors.New("insert or update DB failed")
+	ErrDeleteStoresDB           = errors.New("delete stores DB failed")
+	ErrTxCommit                 = errors.New("Tx commit failed")
 )
 
 var _ model.StoreRepository = (*storeRepository)(nil)
@@ -33,35 +36,50 @@ func (s storeRepository) Query(ctx context.Context, centerLng, centerLat, swLng,
 			FROM (select * from stores where longitude >= $3 and longitude <= $4 and latitude >= $5 and latitude <= $6) as a
 			ORDER BY distance limit $7;`
 
-	q = `select * from stores`
-
 	stores := []model.Store{}
-	//if err := s.db.SelectContext(ctx, &stores, q, centerLng, centerLat, swLng, neLng, swLat, neLat, max); err != nil {
-	if err := s.db.SelectContext(ctx, &stores, q); err != nil {
+	if err := s.db.SelectContext(ctx, &stores, q, centerLng, centerLat, swLng, neLng, swLat, neLat, max); err != nil {
 		return stores, errors.Wrap(ErrQueryStoreFromStoresDB, err)
 	}
 
 	return stores, nil
 }
 
-func (s storeRepository) Insert(ctx context.Context, store model.Store) error {
-	q := `INSERT INTO public.stores (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude, updated)
-			VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :updated)
+func (s storeRepository) Insert(ctx context.Context, stores []model.Store) error {
+	if _, err := s.db.Exec(`delete from stores`); err != nil {
+		level.Error(s.log).Log("method", "s.db.Exec", "sql", "delete from stores", "err", err)
+		return errors.Wrap(ErrDeleteStoresDB, err)
+	}
+
+	q := `INSERT INTO public.stores (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude, custom_note, website, updated)
+			VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :custom_note, :website, :updated)
 			ON CONFLICT (id)
 				DO UPDATE
-				SET name       = :name,
-					phone      = :phone,
-					address    = :address,
-					mask_adult = :mask_adult,
-					mask_child = :mask_child,
-					available  = :available,
-					note       = :note,
-					longitude  = :longitude,
-					latitude   = :latitude,
-					updated    = :updated`
+				SET name        = :name,
+					phone       = :phone,
+					address     = :address,
+					mask_adult  = :mask_adult,
+					mask_child  = :mask_child,
+					available   = :available,
+					note        = :note,
+					longitude   = :longitude,
+					latitude    = :latitude,
+					custom_note = :custom_note,
+					website     = :website,
+					updated     = :updated`
 
-	if _, err := s.db.NamedExecContext(ctx, q, store); err != nil {
-		return errors.Wrap(ErrInsertOrUpdateToStoresDB, err)
+	ctx = context.Background()
+	tx := s.db.MustBeginTx(ctx, nil)
+
+	for _, store := range stores {
+		if _, err := tx.NamedExecContext(ctx, q, store); err != nil {
+			level.Error(s.log).Log("method", "tx.NamedExecContext", "err", err)
+			return errors.Wrap(ErrInsertOrUpdateToStoresDB, err)
+		}
+	}
+
+	err := tx.Commit()
+	if err != nil {
+		return errors.Wrap(ErrTxCommit, err)
 	}
 
 	return nil

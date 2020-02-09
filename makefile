@@ -38,10 +38,14 @@ cloud_sql_proxy:
 	./cloud_sql_proxy -instances=mask-9999:asia-east2:health-insurance-special-pharmacy=tcp:5432
 
 test:
-	curl -X POST http://localhost:8080/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json" | jq
+	curl -X POST http://localhost:8080/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json"
 
 aa:
 	curl -X POST https://endpoint-dot-mask-9999.appspot.com/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json"
 
 bb:
-	curl -X POST https://4-dot-endpoint-dot-mask-9999.appspot.com/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json"
+	curl -X POST https://0-1-dot-endpoint-dot-mask-9999.appspot.com/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json"
+
+c:
+	curl -X POST -H "X-Appengine-Taskname:[]" localhost:8080/api/sync_handler
+	curl -X POST -H "X-Appengine-Taskname:[]" https://0-1-dot-endpoint-dot-mask-9999.appspot.com/api/sync

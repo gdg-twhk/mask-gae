@@ -10,11 +10,10 @@ import (
 	"github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
-	"google.golang.org/grpc/status"
 
 	"github.com/cage1016/mask/internal/app/storesvc/endpoints"
+	"github.com/cage1016/mask/internal/app/storesvc/service"
 	"github.com/cage1016/mask/internal/pkg/errors"
 	"github.com/cage1016/mask/internal/pkg/responses"
 )
@@ -35,16 +34,27 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 	m.Post("/stores", httptransport.NewServer(
 		endpoints.QueryEndpoint,
 		decodeHTTPQueryRequest,
+		encodeJSONResponseOld,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+	m.Post("/api/stores", httptransport.NewServer(
+		endpoints.QueryEndpoint,
+		decodeHTTPQueryRequest,
 		encodeJSONResponse,
 		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
 	))
-	m.Post("/sync", httptransport.NewServer(
+	m.Post("/api/sync", httptransport.NewServer(
 		endpoints.SyncEndpoint,
 		decodeHTTPSyncRequest,
 		encodeJSONResponse,
 		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
 	))
-	m.Get("/metrics", promhttp.Handler())
+	m.Post("/api/sync_handler", httptransport.NewServer(
+		endpoints.SyncHandlerEndpoint,
+		decodeHTTPSyncHandlerRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
 	return cors.AllowAll().Handler(m)
 }
 
@@ -60,8 +70,30 @@ func decodeHTTPQueryRequest(_ context.Context, r *http.Request) (interface{}, er
 // JSON-encoded request from the HTTP request body. Primarily useful in a server.
 func decodeHTTPSyncRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.SyncRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	return req, err
+	//err := json.NewDecoder(r.Body).Decode(&req)
+	return req, nil
+}
+
+// decodeHTTPSyncHandlerRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPSyncHandlerRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.SyncHandlerRequest
+
+	t, ok := r.Header["X-Appengine-Taskname"]
+	if !ok || len(t[0]) == 0 {
+		// You may use the presence of the X-Appengine-Taskname header to validate
+		// the request comes from Cloud Tasks.
+		return nil, service.ErrInvalidTask
+	}
+
+	// Pull useful headers from Task request.
+	q, ok := r.Header["X-Appengine-Queuename"]
+	if ok {
+		req.TaskName = q[0]
+	}
+
+	req.TaskName = t[0]
+	return req, nil
 }
 
 func httpEncodeError(_ context.Context, err error, w http.ResponseWriter) {
@@ -69,37 +101,34 @@ func httpEncodeError(_ context.Context, err error, w http.ResponseWriter) {
 	var message string
 	var errs []errors.Errors
 	w.Header().Set("Content-Type", contentType)
-	if s, ok := status.FromError(err); !ok {
-		// HTTP
-		switch errorVal := err.(type) {
-		case errors.Error:
-			switch {
-			// TODO write your own custom error check here
-			}
 
-			if errorVal.Msg() != "" {
-				message, errs = errorVal.Msg(), errorVal.Errors()
-			}
-		default:
-			switch err {
-			case io.ErrUnexpectedEOF, io.EOF:
-				code = http.StatusBadRequest
-			case kitjwt.ErrTokenContextMissing:
-				code = http.StatusUnauthorized
-			default:
-				switch err.(type) {
-				case *json.SyntaxError, *json.UnmarshalTypeError:
-					code = http.StatusBadRequest
-				}
-			}
-
-			errs = errors.FromError(err.Error())
-			message = errs[0].Message
+	// HTTP
+	switch errorVal := err.(type) {
+	case errors.Error:
+		switch {
+		case errors.Contains(errorVal, service.ErrMalformedEntity),
+			errors.Contains(errorVal, service.ErrInvalidTask),
+			errors.Contains(errorVal, service.ErrTaskCreatFailed):
+			code = http.StatusBadRequest
 		}
-	} else {
-		// GRPC
-		code = HTTPStatusFromCode(s.Code())
-		errs = errors.FromError(s.Message())
+
+		if errorVal.Msg() != "" {
+			message, errs = errorVal.Msg(), errorVal.Errors()
+		}
+	default:
+		switch err {
+		case io.ErrUnexpectedEOF, io.EOF:
+			code = http.StatusBadRequest
+		case kitjwt.ErrTokenContextMissing:
+			code = http.StatusUnauthorized
+		default:
+			switch err.(type) {
+			case *json.SyntaxError, *json.UnmarshalTypeError:
+				code = http.StatusBadRequest
+			}
+		}
+
+		errs = errors.FromError(err.Error())
 		message = errs[0].Message
 	}
 
@@ -127,6 +156,31 @@ func encodeJSONResponse(_ context.Context, w http.ResponseWriter, response inter
 
 	if ar, ok := response.(responses.Responser); ok {
 		return json.NewEncoder(w).Encode(ar.Response())
+	}
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+func encodeJSONResponseOld(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if headerer, ok := response.(httptransport.Headerer); ok {
+		for k, values := range headerer.Headers() {
+			for _, v := range values {
+				w.Header().Add(k, v)
+			}
+		}
+	}
+	code := http.StatusOK
+	if sc, ok := response.(httptransport.StatusCoder); ok {
+		code = sc.StatusCode()
+	}
+	w.WriteHeader(code)
+	if code == http.StatusNoContent {
+		return nil
+	}
+
+	if ar, ok := response.(responses.ResponseOlder); ok {
+		return json.NewEncoder(w).Encode(ar.ResponseOld())
 	}
 
 	return json.NewEncoder(w).Encode(response)

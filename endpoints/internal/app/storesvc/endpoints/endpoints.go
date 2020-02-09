@@ -14,8 +14,9 @@ import (
 // meant to be used as a helper struct, to collect all of the endpoints into a
 // single parameter.
 type Endpoints struct {
-	QueryEndpoint endpoint.Endpoint
-	SyncEndpoint  endpoint.Endpoint
+	QueryEndpoint       endpoint.Endpoint `json:""`
+	SyncEndpoint        endpoint.Endpoint `json:""`
+	SyncHandlerEndpoint endpoint.Endpoint `json:""`
 }
 
 // New return a new instance of the endpoint that wraps the provided service.
@@ -34,6 +35,14 @@ func New(svc service.StoresvcService, logger log.Logger) (ep Endpoints) {
 		syncEndpoint = MakeSyncEndpoint(svc)
 		syncEndpoint = LoggingMiddleware(log.With(logger, "method", method))(syncEndpoint)
 		ep.SyncEndpoint = syncEndpoint
+	}
+
+	var syncHandlerEndpoint endpoint.Endpoint
+	{
+		method := "syncHandler"
+		syncHandlerEndpoint = MakeSyncHandlerEndpoint(svc)
+		syncHandlerEndpoint = LoggingMiddleware(log.With(logger, "method", method))(syncHandlerEndpoint)
+		ep.SyncHandlerEndpoint = syncHandlerEndpoint
 	}
 
 	return ep
@@ -88,5 +97,29 @@ func (e Endpoints) Sync(ctx context.Context) (err error) {
 		return
 	}
 	_ = resp.(SyncResponse)
+	return nil
+}
+
+// MakeSyncHandlerEndpoint returns an endpoint that invokes SyncHandler on the service.
+// Primarily useful in a server.
+func MakeSyncHandlerEndpoint(svc service.StoresvcService) (ep endpoint.Endpoint) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(SyncHandlerRequest)
+		if err := req.validate(); err != nil {
+			return SyncHandlerResponse{}, err
+		}
+		err := svc.SyncHandler(ctx, req.QueueName, req.TaskName)
+		return SyncHandlerResponse{}, err
+	}
+}
+
+// SyncHandler implements the service interface, so Endpoints may be used as a service.
+// This is primarily useful in the context of a client library.
+func (e Endpoints) SyncHandler(ctx context.Context, queueName string, taskName string) (err error) {
+	resp, err := e.SyncHandlerEndpoint(ctx, SyncHandlerRequest{QueueName: queueName, TaskName: taskName})
+	if err != nil {
+		return
+	}
+	_ = resp.(SyncHandlerResponse)
 	return nil
 }

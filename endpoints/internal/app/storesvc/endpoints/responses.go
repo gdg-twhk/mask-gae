@@ -18,6 +18,10 @@ var (
 	_ httptransport.Headerer = (*SyncResponse)(nil)
 
 	_ httptransport.StatusCoder = (*SyncResponse)(nil)
+
+	_ httptransport.Headerer = (*SyncHandlerResponse)(nil)
+
+	_ httptransport.StatusCoder = (*SyncHandlerResponse)(nil)
 )
 
 // QueryResponse collects the response values for the Query method.
@@ -38,13 +42,17 @@ func (r QueryResponse) Response() interface{} {
 	return responses.DataRes{APIVersion: service.Version, Data: r}
 }
 
+func (r QueryResponse) ResponseOld() interface{} {
+	return r.Items
+}
+
 // SyncResponse collects the response values for the Sync method.
 type SyncResponse struct {
-	Err error `json:"err"`
+	Err error `json:"err,omitempty"`
 }
 
 func (r SyncResponse) StatusCode() int {
-	return http.StatusOK // TBA
+	return http.StatusOK
 }
 
 func (r SyncResponse) Headers() http.Header {
@@ -52,5 +60,22 @@ func (r SyncResponse) Headers() http.Header {
 }
 
 func (r SyncResponse) Response() interface{} {
+	return responses.DataRes{APIVersion: service.Version}
+}
+
+// SyncHandlerResponse collects the response values for the SyncHandler method.
+type SyncHandlerResponse struct {
+	Err error `json:"err,omitempty"`
+}
+
+func (r SyncHandlerResponse) StatusCode() int {
+	return http.StatusNoContent // TBA
+}
+
+func (r SyncHandlerResponse) Headers() http.Header {
+	return http.Header{}
+}
+
+func (r SyncHandlerResponse) Response() interface{} {
 	return responses.DataRes{APIVersion: service.Version}
 }
