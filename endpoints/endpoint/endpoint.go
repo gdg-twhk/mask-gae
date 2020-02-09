@@ -91,15 +91,17 @@ func StoresHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type Properties struct {
-	Id        string    `json:"id"`
-	Name      string    `json:"name"`
-	Phone     string    `json:"phone"`
-	Address   string    `json:"address"`
-	MaskAdult uint64    `json:"mask_adult"`
-	MaskChild uint64    `json:"mask_child"`
-	Updated   time.Time `json:"updated"`
-	Note      string    `json:"note"`
-	Available string    `json:"available"`
+	Id         string    `json:"id"`
+	Name       string    `json:"name"`
+	Phone      string    `json:"phone"`
+	Address    string    `json:"address"`
+	MaskAdult  uint64    `json:"mask_adult"`
+	MaskChild  uint64    `json:"mask_child"`
+	Updated    time.Time `json:"updated"`
+	Note       string    `json:"note"`
+	Available  string    `json:"available"`
+	CustomNote string    `json:"custom_note"`
+	Website    string    `json:"website"`
 }
 
 // UnmarshalJSON means to unmarshal json to object.
@@ -247,29 +249,30 @@ func SyncHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("parse points.json ok")
 	log.Println(len(req.Features))
 
-
-	if _, err :=db.Exec(`delete from stores`); err != nil {
+	if _, err := db.Exec(`delete from stores`); err != nil {
 		log.Fatalf("delete from stores err: %v", err)
 	}
 
-	ql := `INSERT INTO public.stores (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude, updated)
-		VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :updated)`
+	ql := `INSERT INTO public.stores (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude, custom_note, website,  updated)
+		VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :custom_note, :website, :updated)`
 
 	log.Println("features counts ", len(req.Features))
 
 	for _, f := range req.Features {
 		store := model.Store{
-			Id:        f.Properties.Id,
-			Name:      f.Properties.Name,
-			Phone:     f.Properties.Phone,
-			Address:   f.Properties.Address,
-			MaskAdult: f.Properties.MaskAdult,
-			MaskChild: f.Properties.MaskChild,
-			Updated:   f.Properties.Updated,
-			Available: f.Properties.Available,
-			Note:      f.Properties.Note,
-			Longitude: f.Geometry.Coordinates[0],
-			Latitude:  f.Geometry.Coordinates[1],
+			Id:         f.Properties.Id,
+			Name:       f.Properties.Name,
+			Phone:      f.Properties.Phone,
+			Address:    f.Properties.Address,
+			MaskAdult:  f.Properties.MaskAdult,
+			MaskChild:  f.Properties.MaskChild,
+			Updated:    f.Properties.Updated,
+			Available:  f.Properties.Available,
+			CustomNote: f.Properties.CustomNote,
+			Website:    f.Properties.Website,
+			Note:       f.Properties.Note,
+			Longitude:  f.Geometry.Coordinates[0],
+			Latitude:   f.Geometry.Coordinates[1],
 		}
 
 		if _, err := db.NamedExec(ql, store); err != nil {
