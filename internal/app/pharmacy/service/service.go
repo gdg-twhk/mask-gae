@@ -11,10 +11,12 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/lib/pq"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
-	"github.com/cage1016/mask/internal/app/storesvc/model"
+	"github.com/cage1016/mask/internal/app/pharmacy/model"
 	"github.com/cage1016/mask/internal/pkg/errors"
+	"github.com/cage1016/mask/internal/pkg/util"
 )
 
 var (
@@ -33,47 +35,45 @@ var (
 	ErrStorageReadObject  = errors.New("storage read object failed")
 )
 
-var location *time.Location
-
 // Middleware describes a service (as opposed to endpoint) middleware.
-type Middleware func(StoresvcService) StoresvcService
+type Middleware func(PharmacyService) PharmacyService
 
 // Service describes a service that adds things together
 // Implement yor service methods methods.
 // e.x: Foo(ctx context.Context, s string)(rs string, err error)
-type StoresvcService interface {
-	// [method=post,expose=true,router=api/stores]
-	Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, seLng float64, seLat float64, swLng float64, swLat float64, nwLng float64, nwLat float64, max uint64) (items []model.Store, err error)
-	// [method=post,expose=true,router=api/sync]
+type PharmacyService interface {
+	// [method=post,expose=true,router=api/pharmacies]
+	Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, seLng float64, seLat float64, swLng float64, swLat float64, nwLng float64, nwLat float64, max uint64) (items []model.Pharmacy, err error)
+	// [method=post,expose=true,router=api/pharmacies/sync]
 	Sync(ctx context.Context) (err error)
-	// [method=post,expose=true,router=api/sync_handler]
+	// [method=post,expose=true,router=api/pharmacies/sync_handler]
 	SyncHandler(ctx context.Context, queueName string, taskName string) (err error)
 }
 
 // the concrete implementation of service interface
-type stubStoresvcService struct {
-	logger log.Logger            `json:"logger"`
-	repo   model.StoreRepository `json:"repo"`
+type stubPharmacyService struct {
+	logger log.Logger               `json:"logger"`
+	repo   model.PharmacyRepository `json:"repo"`
 }
 
 // New return a new instance of the service.
 // If you want to add service middleware this is the place to put them.
-func New(repo model.StoreRepository, logger log.Logger) (s StoresvcService) {
-	var svc StoresvcService
+func New(repo model.PharmacyRepository, logger log.Logger) (s PharmacyService) {
+	var svc PharmacyService
 	{
-		svc = &stubStoresvcService{repo: repo, logger: logger}
+		svc = &stubPharmacyService{repo: repo, logger: logger}
 		svc = LoggingMiddleware(logger)(svc)
 	}
 	return svc
 }
 
 // Implement the business logic of Query
-func (st *stubStoresvcService) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, _ float64, _ float64, swLng float64, swLat float64, _ float64, _ float64, max uint64) (items []model.Store, err error) {
+func (st *stubPharmacyService) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, _ float64, _ float64, swLng float64, swLat float64, _ float64, _ float64, max uint64) (items []model.Pharmacy, err error) {
 	return st.repo.Query(ctx, centerLng, centerLat, swLng, neLng, swLat, neLat, max)
 }
 
 // Implement the business logic of Sync
-func (st *stubStoresvcService) Sync(ctx context.Context) (err error) {
+func (st *stubPharmacyService) Sync(ctx context.Context) (err error) {
 	taskClient, err := cloudtasks.NewClient(ctx)
 	if err != nil {
 		level.Error(st.logger).Log("method", "cloudtasks.NewClient", "err", err)
@@ -93,7 +93,7 @@ func (st *stubStoresvcService) Sync(ctx context.Context) (err error) {
 			MessageType: &taskspb.Task_AppEngineHttpRequest{
 				AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
 					HttpMethod:  taskspb.HttpMethod_POST,
-					RelativeUri: "/api/sync_handler",
+					RelativeUri: "/api/pharmacies/sync_handler",
 				},
 			},
 		},
@@ -110,7 +110,7 @@ func (st *stubStoresvcService) Sync(ctx context.Context) (err error) {
 }
 
 // Implement the business logic of SyncHandler
-func (st *stubStoresvcService) SyncHandler(ctx context.Context, queueName string, taskName string) (err error) {
+func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string, taskName string) (err error) {
 	st.logger.Log("method", "SyncHandler start", "queue", queueName, "task", taskName)
 	// Creates a client.
 	client, err := storage.NewClient(ctx)
@@ -136,41 +136,43 @@ func (st *stubStoresvcService) SyncHandler(ctx context.Context, queueName string
 		return errors.Wrap(ErrMalformedEntity, err)
 	}
 
-	stores := make([]model.Store, len(req.Features))
+	pharmacies := make([]model.Pharmacy, len(req.Features))
 	for i, f := range req.Features {
-		store := model.Store{
-			Id:        f.Properties.Id,
-			Name:      f.Properties.Name,
-			Phone:     f.Properties.Phone,
-			Address:   f.Properties.Address,
-			MaskAdult: f.Properties.MaskAdult,
-			MaskChild: f.Properties.MaskChild,
-			Updated:   f.Properties.Updated,
-			Available: f.Properties.Available,
-			Note:      f.Properties.Note,
-			Longitude: f.Geometry.Coordinates[0],
-			Latitude:  f.Geometry.Coordinates[1],
+		pharmacy := model.Pharmacy{
+			Id:         f.Properties.Id,
+			Name:       f.Properties.Name,
+			Phone:      f.Properties.Phone,
+			Address:    f.Properties.Address,
+			MaskAdult:  f.Properties.MaskAdult,
+			MaskChild:  f.Properties.MaskChild,
+			Updated:    f.Properties.Updated,
+			Available:  f.Properties.Available,
+			CustomNote: f.Properties.CustomNote,
+			Website:    f.Properties.Website,
+			Note:       f.Properties.Note,
+			Longitude:  f.Geometry.Coordinates[0],
+			Latitude:   f.Geometry.Coordinates[1],
 		}
-		stores[i] = store
+		pharmacies[i] = pharmacy
 	}
 
-	err = st.repo.Insert(ctx, stores)
+	err = st.repo.Insert(ctx, pharmacies)
 	st.logger.Log("method", "SyncHandler done", "queue", queueName, "task", taskName, "err", err)
 	return err
 }
 
 type Properties struct {
-	Id         string    `json:"id"`
-	Name       string    `json:"name"`
-	Phone      string    `json:"phone"`
-	Address    string    `json:"address"`
-	MaskAdult  uint64    `json:"mask_adult"`
-	MaskChild  uint64    `json:"mask_child"`
-	Updated    time.Time `json:"updated"`
-	Note       string    `json:"note"`
-	Available  string    `json:"available"`
-	CustomNote string    `json:"custom_note"`
-	Website    string    `json:"website"`
+	Id         string       `json:"id"`
+	Name       string       `json:"name"`
+	Phone      string       `json:"phone"`
+	Address    string       `json:"address"`
+	MaskAdult  uint64       `json:"mask_adult"`
+	MaskChild  uint64       `json:"mask_child"`
+	Updated    *pq.NullTime `json:"updated"`
+	Note       string       `json:"note"`
+	Available  string       `json:"available"`
+	CustomNote string       `json:"custom_note"`
+	Website    string       `json:"website"`
 }
 
 // UnmarshalJSON means to unmarshal json to object.
@@ -189,12 +191,15 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 	}
 
 	if pr.Updated != "" {
-		expired, err := time.ParseInLocation("2006/01/02 15:04:05", pr.Updated, location)
+		expired, err := time.ParseInLocation("2006/01/02 15:04:05", pr.Updated, util.Location)
 		if err != nil {
 			return err
 		}
 
-		p.Updated = expired
+		p.Updated = &pq.NullTime{
+			Time:  expired,
+			Valid: true,
+		}
 	}
 
 	return nil
@@ -211,12 +216,4 @@ type Features struct {
 type Collection struct {
 	Type     string     `json:"type"`
 	Features []Features `json:"features"`
-}
-
-func init() {
-	location = time.Now().Location()
-	l, err := time.LoadLocation("Asia/Taipei")
-	if err == nil {
-		location = l
-	}
 }

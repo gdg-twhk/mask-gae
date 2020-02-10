@@ -12,8 +12,8 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/rs/cors"
 
-	"github.com/cage1016/mask/internal/app/storesvc/endpoints"
-	"github.com/cage1016/mask/internal/app/storesvc/service"
+	"github.com/cage1016/mask/internal/app/pharmacy/endpoints"
+	"github.com/cage1016/mask/internal/app/pharmacy/service"
 	"github.com/cage1016/mask/internal/pkg/errors"
 	"github.com/cage1016/mask/internal/pkg/responses"
 )
@@ -31,25 +31,19 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 	}
 
 	m := bone.New()
-	m.Post("/stores", httptransport.NewServer(
-		endpoints.QueryEndpoint,
-		decodeHTTPQueryRequest,
-		encodeJSONResponseOld,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Post("/api/stores", httptransport.NewServer(
+	m.Post("/api/pharmacies", httptransport.NewServer(
 		endpoints.QueryEndpoint,
 		decodeHTTPQueryRequest,
 		encodeJSONResponse,
 		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
 	))
-	m.Post("/api/sync", httptransport.NewServer(
+	m.Post("/api/pharmacies/sync", httptransport.NewServer(
 		endpoints.SyncEndpoint,
 		decodeHTTPSyncRequest,
 		encodeJSONResponse,
 		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
 	))
-	m.Post("/api/sync_handler", httptransport.NewServer(
+	m.Post("/api/pharmacies/sync_handler", httptransport.NewServer(
 		endpoints.SyncHandlerEndpoint,
 		decodeHTTPSyncHandlerRequest,
 		encodeJSONResponse,
@@ -156,31 +150,6 @@ func encodeJSONResponse(_ context.Context, w http.ResponseWriter, response inter
 
 	if ar, ok := response.(responses.Responser); ok {
 		return json.NewEncoder(w).Encode(ar.Response())
-	}
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-func encodeJSONResponseOld(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if headerer, ok := response.(httptransport.Headerer); ok {
-		for k, values := range headerer.Headers() {
-			for _, v := range values {
-				w.Header().Add(k, v)
-			}
-		}
-	}
-	code := http.StatusOK
-	if sc, ok := response.(httptransport.StatusCoder); ok {
-		code = sc.StatusCode()
-	}
-	w.WriteHeader(code)
-	if code == http.StatusNoContent {
-		return nil
-	}
-
-	if ar, ok := response.(responses.ResponseOlder); ok {
-		return json.NewEncoder(w).Encode(ar.ResponseOld())
 	}
 
 	return json.NewEncoder(w).Encode(response)

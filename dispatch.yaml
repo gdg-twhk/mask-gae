@@ -2,8 +2,8 @@ dispatch:
   - url: "*/favicon.ico"
     module: default
 
-  - url: "*/api/*"
-    module: endpoint
+  - url: "*/api/pharmacies*"
+    module: pharmacy
 
   - url: "*/googleae8f4bcce8bec00c.html"
     module: ownership
