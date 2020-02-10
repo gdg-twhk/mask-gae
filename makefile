@@ -19,33 +19,29 @@ run:
 	--host 0.0.0.0 \
 	--enable_sendmail=yes
 
-update_frontend:
-	gcloud app deploy --version $(VERSION) frontend/app.yaml --project $(PROJECT) --promote -q
+# update_frontend:
+# 	gcloud app deploy --version $(VERSION) frontend/app.yaml --project $(PROJECT) --promote -q
+#
+# update_endpoints:
+# 	gcloud app deploy --version $(VERSION) endpoints/app.yaml --project $(PROJECT) --promote -q
+#
+# update_ownership:
+# 	gcloud app deploy --version=$(VERSION) ownership/app.yaml --project $(PROJECT) --promote -q
+#
+update_pharmacy:
+	gcloud app deploy --version=0-1 pharmacy/app.yaml --project $(PROJECT) --promote -q
 
-update_endpoints:
-	gcloud app deploy --version $(VERSION) endpoints/app.yaml --project $(PROJECT) --promote -q
-
-update_ownership:
-	gcloud app deploy --version=$(VERSION) ownership/app.yaml --project $(PROJECT) --promote -q
 
 update_dispatch:
 	gcloud app deploy --version=$(VERSION)  dispatch.yaml --project $(PROJECT) -q
-
-update: update_frontend update_endpoints update_ownership update_dispatch
+#
+# update: update_frontend update_endpoints update_ownership update_dispatch
 # update: update_frontend update_endpoints
 
-cloud_sql_proxy:
+
+
+sql:
 	./cloud_sql_proxy -instances=mask-9999:asia-east2:health-insurance-special-pharmacy=tcp:5432
 
-test:
-	curl -X POST http://localhost:8080/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json"
-
-aa:
-	curl -X POST https://endpoint-dot-mask-9999.appspot.com/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json"
-
-bb:
-	curl -X POST https://0-1-dot-endpoint-dot-mask-9999.appspot.com/stores -H 'Content-Type: application/json; charset=utf-8' --data-binary @"test.json"
-
-c:
-	curl -X POST -H "X-Appengine-Taskname:[]" localhost:8080/api/sync_handler
-	curl -X POST -H "X-Appengine-Taskname:[]" https://0-1-dot-endpoint-dot-mask-9999.appspot.com/api/sync
+cmdpharmacy:
+	MADK_PHARMACY_DB_HOST=localhost MADK_PHARMACY_DB_PORT=5433 go run pharmacy/main.go

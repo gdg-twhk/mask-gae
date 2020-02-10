@@ -13,19 +13,18 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/cage1016/mask/internal/app/storesvc/endpoints"
-	"github.com/cage1016/mask/internal/app/storesvc/postgres"
-	"github.com/cage1016/mask/internal/app/storesvc/service"
-	"github.com/cage1016/mask/internal/app/storesvc/transports"
+	"github.com/cage1016/mask/internal/app/pharmacy/endpoints"
+	"github.com/cage1016/mask/internal/app/pharmacy/postgres"
+	"github.com/cage1016/mask/internal/app/pharmacy/service"
+	"github.com/cage1016/mask/internal/app/pharmacy/transports"
 )
 
 const (
-	defServiceName   = "storesvc"
+	defServiceName   = "pharmacy"
 	defLogLevel      = "error"
 	defServiceHost   = "localhost"
 	defHTTPPort      = "8080"
 	defDBHost        = "/cloudsql/mask-9999:asia-east2:health-insurance-special-pharmacy"
-	//defDBHost        = "localhost"
 	defDBPort        = "5432"
 	defDBUser        = "postgres"
 	defDBPass        = "password"
@@ -35,19 +34,19 @@ const (
 	defDBSSLKey      = ""
 	defDBSSLRootCert = ""
 
-	envServiceName   = "MADK_STORESVC_SERVICE_NAME"
-	envLogLevel      = "MADK_STORESVC_LOG_LEVEL"
-	envServiceHost   = "MSSK_STORESVC_SERVICE_HOST"
+	envServiceName   = "MADK_PHARMACY_SERVICE_NAME"
+	envLogLevel      = "MADK_PHARMACY_LOG_LEVEL"
+	envServiceHost   = "MSSK_PHARMACY_SERVICE_HOST"
 	envHTTPPort      = "PORT"
-	envDBHost        = "MADK_STORESVC_DB_HOST"
-	envDBPort        = "MADK_STORESVC_DB_PORT"
-	envDBUser        = "MADK_STORESVC_DB_USER"
-	envDBPass        = "MADK_STORESVC_DB_PASS"
-	envDBName        = "MADK_STORESVC_DB"
-	envDBSSLMode     = "MADK_STORESVC_DB_SSL_MODE"
-	envDBSSLCert     = "MADK_STORESVC_DB_SSL_CERT"
-	envDBSSLKey      = "MADK_STORESVC_DB_SSL_KEY"
-	envDBSSLRootCert = "MADK_STORESVC_DB_SSL_ROOT_CERT"
+	envDBHost        = "MADK_PHARMACY_DB_HOST"
+	envDBPort        = "MADK_PHARMACY_DB_PORT"
+	envDBUser        = "MADK_PHARMACY_DB_USER"
+	envDBPass        = "MADK_PHARMACY_DB_PASS"
+	envDBName        = "MADK_PHARMACY_DB"
+	envDBSSLMode     = "MADK_PHARMACY_DB_SSL_MODE"
+	envDBSSLCert     = "MADK_PHARMACY_DB_SSL_CERT"
+	envDBSSLKey      = "MADK_PHARMACY_DB_SSL_KEY"
+	envDBSSLRootCert = "MADK_PHARMACY_DB_SSL_ROOT_CERT"
 )
 
 type config struct {
@@ -143,7 +142,7 @@ func connectToDB(cfg postgres.Config, logger log.Logger) *sqlx.DB {
 	return db
 }
 
-func NewServer(db *sqlx.DB, logger log.Logger) service.StoresvcService {
+func NewServer(db *sqlx.DB, logger log.Logger) service.PharmacyService {
 	repo := postgres.New(db, logger)
 	service := service.New(repo, logger)
 	return service

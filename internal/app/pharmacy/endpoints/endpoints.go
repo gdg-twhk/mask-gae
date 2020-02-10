@@ -6,11 +6,11 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 
-	"github.com/cage1016/mask/internal/app/storesvc/model"
-	"github.com/cage1016/mask/internal/app/storesvc/service"
+	"github.com/cage1016/mask/internal/app/pharmacy/model"
+	"github.com/cage1016/mask/internal/app/pharmacy/service"
 )
 
-// Endpoints collects all of the endpoints that compose the storesvc service. It's
+// Endpoints collects all of the endpoints that compose the pharmacy service. It's
 // meant to be used as a helper struct, to collect all of the endpoints into a
 // single parameter.
 type Endpoints struct {
@@ -20,7 +20,7 @@ type Endpoints struct {
 }
 
 // New return a new instance of the endpoint that wraps the provided service.
-func New(svc service.StoresvcService, logger log.Logger) (ep Endpoints) {
+func New(svc service.PharmacyService, logger log.Logger) (ep Endpoints) {
 	var queryEndpoint endpoint.Endpoint
 	{
 		method := "query"
@@ -50,20 +50,20 @@ func New(svc service.StoresvcService, logger log.Logger) (ep Endpoints) {
 
 // MakeQueryEndpoint returns an endpoint that invokes Query on the service.
 // Primarily useful in a server.
-func MakeQueryEndpoint(svc service.StoresvcService) (ep endpoint.Endpoint) {
+func MakeQueryEndpoint(svc service.PharmacyService) (ep endpoint.Endpoint) {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(QueryRequest)
 		if err := req.validate(); err != nil {
 			return QueryResponse{}, err
 		}
-		stores, err := svc.Query(ctx, req.Center.Lng, req.Center.Lat, req.Bounds.Ne.Lng, req.Bounds.Ne.Lat, req.Bounds.Se.Lng, req.Bounds.Se.Lat, req.Bounds.Sw.Lng, req.Bounds.Sw.Lat, req.Bounds.Nw.Lng, req.Bounds.Nw.Lat, req.Max)
-		return QueryResponse{Items: stores}, err
+		pharmacies, err := svc.Query(ctx, req.Center.Lng, req.Center.Lat, req.Bounds.Ne.Lng, req.Bounds.Ne.Lat, req.Bounds.Se.Lng, req.Bounds.Se.Lat, req.Bounds.Sw.Lng, req.Bounds.Sw.Lat, req.Bounds.Nw.Lng, req.Bounds.Nw.Lat, req.Max)
+		return QueryResponse{Items: pharmacies}, err
 	}
 }
 
 // Query implements the service interface, so Endpoints may be used as a service.
 // This is primarily useful in the context of a client library.
-func (e Endpoints) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, seLng float64, seLat float64, swLng float64, swLat float64, nwLng float64, nwLat float64, max uint64) (items []model.Store, err error) {
+func (e Endpoints) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, seLng float64, seLat float64, swLng float64, swLat float64, nwLng float64, nwLat float64, max uint64) (items []model.Pharmacy, err error) {
 	resp, err := e.QueryEndpoint(ctx, QueryRequest{Center: LatLng{
 		Lat: centerLat,
 		Lng: centerLng,
@@ -82,7 +82,7 @@ func (e Endpoints) Query(ctx context.Context, centerLng float64, centerLat float
 
 // MakeSyncEndpoint returns an endpoint that invokes Sync on the service.
 // Primarily useful in a server.
-func MakeSyncEndpoint(svc service.StoresvcService) (ep endpoint.Endpoint) {
+func MakeSyncEndpoint(svc service.PharmacyService) (ep endpoint.Endpoint) {
 	return func(ctx context.Context, _ interface{}) (interface{}, error) {
 		err := svc.Sync(ctx)
 		return SyncResponse{}, err
@@ -102,7 +102,7 @@ func (e Endpoints) Sync(ctx context.Context) (err error) {
 
 // MakeSyncHandlerEndpoint returns an endpoint that invokes SyncHandler on the service.
 // Primarily useful in a server.
-func MakeSyncHandlerEndpoint(svc service.StoresvcService) (ep endpoint.Endpoint) {
+func MakeSyncHandlerEndpoint(svc service.PharmacyService) (ep endpoint.Endpoint) {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(SyncHandlerRequest)
 		if err := req.validate(); err != nil {

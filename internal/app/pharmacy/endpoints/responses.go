@@ -5,8 +5,8 @@ import (
 
 	httptransport "github.com/go-kit/kit/transport/http"
 
-	"github.com/cage1016/mask/internal/app/storesvc/model"
-	"github.com/cage1016/mask/internal/app/storesvc/service"
+	"github.com/cage1016/mask/internal/app/pharmacy/model"
+	"github.com/cage1016/mask/internal/app/pharmacy/service"
 	"github.com/cage1016/mask/internal/pkg/responses"
 )
 
@@ -26,8 +26,8 @@ var (
 
 // QueryResponse collects the response values for the Query method.
 type QueryResponse struct {
-	Items []model.Store `json:"items"`
-	Err   error         `json:"err,omitempty"`
+	Items []model.Pharmacy `json:"items"`
+	Err   error            `json:"err,omitempty"`
 }
 
 func (r QueryResponse) StatusCode() int {

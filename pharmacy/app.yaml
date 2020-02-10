@@ -1,4 +1,4 @@
-service: endpoint
+service: pharmacy
 
 runtime: go112
 

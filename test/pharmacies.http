@@ -1,0 +1,21 @@
+### local
+POST http://localhost:8080/api/pharmacies  HTTP/1.1
+Content-Type: application/json
+
+< ./test.json
+
+### pharmacies
+POST https://mask-9999.appspot.com/api/pharmacies  HTTP/1.1
+Content-Type: application/json
+
+< ./test.json
+
+
+### sync 
+POST https://mask-9999.appspot.com/api/pharmacies/sync HTTP/1.1
+
+### sync handler
+POST https://mask-9999.appspot.com/api/pharmacies/sync_handler HTTP/1.1
+X-Appengine-Taskname:[]
+
+###

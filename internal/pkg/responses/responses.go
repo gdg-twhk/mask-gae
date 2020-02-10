@@ -15,11 +15,3 @@ type Paging struct {
 	StartIndex       int64 `json:"startIndex"`
 	TotalItems       int64 `json:"totalItems"`
 }
-
-type DataResOld struct {
-	Data interface{} `json:"data"`
-}
-
-type ResponseOlder interface {
-	ResponseOld() interface{}
-}
