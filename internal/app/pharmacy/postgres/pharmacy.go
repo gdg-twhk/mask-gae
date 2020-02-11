@@ -51,22 +51,29 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 		return errors.Wrap(ErrDeletePharmaciesDB, err)
 	}
 
-	q := `INSERT INTO pharmacies (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude, custom_note, website, updated)
-			VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :custom_note, :website, :updated)
+	q := `INSERT INTO pharmacies (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude,
+									custom_note, website, updated, service_periods, service_note, county, town, cunli)
+			VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :custom_note,
+					:website, :updated, :service_periods, :service_note, :county, :town, :cunli)
 			ON CONFLICT (id)
 				DO UPDATE
-				SET name        = :name,
-					phone       = :phone,
-					address     = :address,
-					mask_adult  = :mask_adult,
-					mask_child  = :mask_child,
-					available   = :available,
-					note        = :note,
-					longitude   = :longitude,
-					latitude    = :latitude,
-					custom_note = :custom_note,
-					website     = :website,
-					updated     = :updated`
+				SET name            = :name,
+					phone           = :phone,
+					address         = :address,
+					mask_adult      = :mask_adult,
+					mask_child      = :mask_child,
+					available       = :available,
+					note            = :note,
+					longitude       = :longitude,
+					latitude        = :latitude,
+					custom_note     = :custom_note,
+					website         = :website,
+					updated         = :updated,
+					service_periods = :service_periods,
+					service_note    = :service_note,
+					county          = :county,
+					town            = :town,
+					cunli           = :cunli`
 
 	ctx = context.Background()
 	tx := s.db.MustBeginTx(ctx, nil)

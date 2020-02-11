@@ -13,20 +13,25 @@ import (
 var location *time.Location
 
 type Pharmacy struct {
-	Id         string       `json:"id" db:"id"`
-	Distance   float64      `json:"distance" db:"distance"`
-	Name       string       `json:"name" db:"name"`
-	Phone      string       `json:"phone" db:"phone"`
-	Address    string       `json:"address" db:"address"`
-	MaskAdult  uint64       `json:"maskAdult" db:"mask_adult"`
-	MaskChild  uint64       `json:"maskChild" db:"mask_child"`
-	Updated    *pq.NullTime `json:"updated" db:"updated"`
-	Available  string       `json:"available" db:"available"`
-	CustomNote string       `json:"customNote" db:"custom_note"`
-	Website    string       `json:"website" db:"website"`
-	Note       string       `json:"note" db:"note"`
-	Longitude  float64      `json:"longitude" db:"longitude"`
-	Latitude   float64      `json:"latitude" db:"latitude"`
+	Id             string       `json:"id" db:"id"`
+	Distance       float64      `json:"distance" db:"distance"`
+	Name           string       `json:"name" db:"name"`
+	Phone          string       `json:"phone" db:"phone"`
+	Address        string       `json:"address" db:"address"`
+	MaskAdult      uint64       `json:"maskAdult" db:"mask_adult"`
+	MaskChild      uint64       `json:"maskChild" db:"mask_child"`
+	Updated        *pq.NullTime `json:"updated" db:"updated"`
+	Available      string       `json:"available" db:"available"`
+	CustomNote     string       `json:"customNote" db:"custom_note"`
+	Website        string       `json:"website" db:"website"`
+	Note           string       `json:"note" db:"note"`
+	Longitude      float64      `json:"longitude" db:"longitude"`
+	Latitude       float64      `json:"latitude" db:"latitude"`
+	ServicePeriods string       `json:"servicePeriods" db:"service_periods"`
+	ServiceNote    string       `json:"serviceNote" db:"service_note"`
+	County         string       `json:"county" db:"county"`
+	Town           string       `json:"town" db:"town"`
+	Cunli          string       `json:"cunli" db:"cunli"`
 }
 
 func (p *Pharmacy) MarshalJSON() ([]byte, error) {
