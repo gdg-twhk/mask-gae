@@ -71,6 +71,32 @@ func migrateDB(db *sqlx.DB) error {
 				},
 				Down: []string{"DROP TABLE pharmacies"},
 			},
+			{
+				Id: "pharmacy_2",
+				Up: []string{`
+					alter table pharmacies
+						add service_periods varchar(21) default '' not null;
+					
+					alter table pharmacies
+						add service_note varchar(1024) default '' not null;
+					
+					alter table pharmacies
+						add county varchar(19) default '' not null;
+					
+					alter table pharmacies
+						add town varchar(10) default '' not null;
+					
+					alter table pharmacies
+						add cunli varchar(10) default '' not null;
+				`},
+				Down: []string{`
+					alter table pharmacies drop column service_periods;
+					alter table pharmacies drop column service_note;
+					alter table pharmacies drop column county;
+					alter table pharmacies drop column town;
+					alter table pharmacies drop column cunli;
+				`},
+			},
 		},
 	}
 

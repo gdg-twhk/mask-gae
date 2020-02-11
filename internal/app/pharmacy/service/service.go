@@ -139,19 +139,24 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 	pharmacies := make([]model.Pharmacy, len(req.Features))
 	for i, f := range req.Features {
 		pharmacy := model.Pharmacy{
-			Id:         f.Properties.Id,
-			Name:       f.Properties.Name,
-			Phone:      f.Properties.Phone,
-			Address:    f.Properties.Address,
-			MaskAdult:  f.Properties.MaskAdult,
-			MaskChild:  f.Properties.MaskChild,
-			Updated:    f.Properties.Updated,
-			Available:  f.Properties.Available,
-			CustomNote: f.Properties.CustomNote,
-			Website:    f.Properties.Website,
-			Note:       f.Properties.Note,
-			Longitude:  f.Geometry.Coordinates[0],
-			Latitude:   f.Geometry.Coordinates[1],
+			Id:             f.Properties.Id,
+			Name:           f.Properties.Name,
+			Phone:          f.Properties.Phone,
+			Address:        f.Properties.Address,
+			MaskAdult:      f.Properties.MaskAdult,
+			MaskChild:      f.Properties.MaskChild,
+			Updated:        f.Properties.Updated,
+			Available:      f.Properties.Available,
+			CustomNote:     f.Properties.CustomNote,
+			Website:        f.Properties.Website,
+			Note:           f.Properties.Note,
+			Longitude:      f.Geometry.Coordinates[0],
+			Latitude:       f.Geometry.Coordinates[1],
+			ServicePeriods: f.Properties.ServicePeriods,
+			ServiceNote:    f.Properties.ServiceNote,
+			County:         f.Properties.County,
+			Town:           f.Properties.Town,
+			Cunli:          f.Properties.Cunli,
 		}
 		pharmacies[i] = pharmacy
 	}
@@ -162,17 +167,22 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 }
 
 type Properties struct {
-	Id         string       `json:"id"`
-	Name       string       `json:"name"`
-	Phone      string       `json:"phone"`
-	Address    string       `json:"address"`
-	MaskAdult  uint64       `json:"mask_adult"`
-	MaskChild  uint64       `json:"mask_child"`
-	Updated    *pq.NullTime `json:"updated"`
-	Note       string       `json:"note"`
-	Available  string       `json:"available"`
-	CustomNote string       `json:"custom_note"`
-	Website    string       `json:"website"`
+	Id             string       `json:"id"`
+	Name           string       `json:"name"`
+	Phone          string       `json:"phone"`
+	Address        string       `json:"address"`
+	MaskAdult      uint64       `json:"mask_adult"`
+	MaskChild      uint64       `json:"mask_child"`
+	Updated        *pq.NullTime `json:"updated"`
+	Note           string       `json:"note"`
+	Available      string       `json:"available"`
+	CustomNote     string       `json:"custom_note"`
+	Website        string       `json:"website"`
+	ServicePeriods string       `json:"service_periods"`
+	ServiceNote    string       `json:"service_note"`
+	County         string       `json:"county"`
+	Town           string       `json:"town"`
+	Cunli          string       `json:"cunli"`
 }
 
 // UnmarshalJSON means to unmarshal json to object.

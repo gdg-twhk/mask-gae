@@ -4,6 +4,10 @@ Content-Type: application/json
 
 < ./test.json
 
+### 
+POST http://localhost:8080/api/pharmacies/sync_handler HTTP/1.1
+X-Appengine-Taskname:[]
+
 ### pharmacies
 POST https://mask-9999.appspot.com/api/pharmacies  HTTP/1.1
 Content-Type: application/json
