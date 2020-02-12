@@ -1,0 +1,77 @@
+# Decrypt the file containing the key
+steps:
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - kms
+  - decrypt
+  - --ciphertext-file=id_rsa.enc
+  - --plaintext-file=/root/.ssh/id_rsa
+  - --location=global
+  - --keyring=my-keyring
+  - --key=github-key
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+# Set up git with key and domain
+- name: 'gcr.io/cloud-builders/git'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    chmod 600 /root/.ssh/id_rsa
+    cat <<EOF >/root/.ssh/config
+    Hostname github.com
+    IdentityFile /root/.ssh/id_rsa
+    EOF
+    mv known_hosts /root/.ssh/known_hosts
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- name: 'gcr.io/cloud-builders/git'
+  entrypoint: 'bash'
+  args:
+  - -exc
+  - |
+    # Cloud Build x GitHub integration uses source archives to fetch
+    # the source, rather than Git source fetching, and as a consequence
+    # does not include the .git/ directory. As a workaround, we clone
+    # the repository and reset it to this build's commit sha.
+    git clone 'git@github.com:cage1016/mask-gae.git' tmp
+    mv tmp/.git .git
+    rm -rf tmp
+    git reset "$COMMIT_SHA"
+    git submodule sync --recursive
+    git submodule update --init --recursive
+    cd frontend/mask-web
+    git checkout -t origin/release
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- name: 'gcr.io/cloud-builders/npm'
+  dir: 'frontend/mask-web'
+  args:
+  - install
+
+- name: 'gcr.io/mask-9999/ng:v9'
+  dir: 'frontend/mask-web'
+  args:
+  - build
+  - --prod
+
+- name: gcr.io/cloud-builders/gcloud
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    # get mask-web short sha
+    maskWebShortSha=$(git ls-files -s frontend/mask-web  | awk '{print substr($2,0,7)}')
+    
+    # deploy
+    gcloud app deploy --version=${maskWebShortSha} frontend/app.yaml --no-promote -q
+
+    echo "deploy succeeded."
+
+timeout: "1600s"

@@ -8,7 +8,7 @@ import (
 )
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "build/"+r.URL.Path)
+	http.ServeFile(w, r, "mask-web/dist/mask-web/"+r.URL.Path)
 }
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
