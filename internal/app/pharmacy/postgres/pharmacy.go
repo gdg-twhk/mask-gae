@@ -14,7 +14,7 @@ import (
 var (
 	ErrQueryStoreFromPharmaciesDB   = errors.New("query pharmacies from DB failed")
 	ErrInsertOrUpdateToPharmaciesDB = errors.New("insert or update DB failed")
-	ErrDeletePharmaciesDB           = errors.New("delete pharmacies DB failed")
+	ErrExecContextPharmaciesDB      = errors.New("exec context pharmacies DB failed")
 	ErrTxCommit                     = errors.New("Tx commit failed")
 )
 
@@ -46,43 +46,29 @@ func (s pharmacyRepository) Query(ctx context.Context, centerLng, centerLat, swL
 }
 
 func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharmacy) error {
-	if _, err := s.db.Exec(`delete from pharmacies`); err != nil {
-		level.Error(s.log).Log("method", "s.db.Exec", "sql", "delete from pharmacies", "err", err)
-		return errors.Wrap(ErrDeletePharmaciesDB, err)
-	}
-
-	q := `INSERT INTO pharmacies (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude,
-									custom_note, website, updated, service_periods, service_note, county, town, cunli)
-			VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :custom_note,
-					:website, :updated, :service_periods, :service_note, :county, :town, :cunli)
-			ON CONFLICT (id)
-				DO UPDATE
-				SET name            = :name,
-					phone           = :phone,
-					address         = :address,
-					mask_adult      = :mask_adult,
-					mask_child      = :mask_child,
-					available       = :available,
-					note            = :note,
-					longitude       = :longitude,
-					latitude        = :latitude,
-					custom_note     = :custom_note,
-					website         = :website,
-					updated         = :updated,
-					service_periods = :service_periods,
-					service_note    = :service_note,
-					county          = :county,
-					town            = :town,
-					cunli           = :cunli`
-
 	ctx = context.Background()
 	tx := s.db.MustBeginTx(ctx, nil)
+
+	if _, err := tx.ExecContext(ctx, `create table T as select * from pharmacies with no data;`); err != nil {
+		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "create table T as select * from pharmacies with no data;", "err", err)
+		return errors.Wrap(ErrExecContextPharmaciesDB, err)
+	}
+
+	q := `INSERT INTO T (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude,
+						   custom_note, website, updated, service_periods, service_note, county, town, cunli)
+			VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :custom_note,
+					:website, :updated, :service_periods, :service_note, :county, :town, :cunli);`
 
 	for _, store := range pharmacies {
 		if _, err := tx.NamedExecContext(ctx, q, store); err != nil {
 			level.Error(s.log).Log("method", "tx.NamedExecContext", "err", err)
 			return errors.Wrap(ErrInsertOrUpdateToPharmaciesDB, err)
 		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `drop table pharmacies; alter table T rename to pharmacies;`); err != nil {
+		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "drop table pharmacies; alter table T rename to pharmacies;", "err", err)
+		return errors.Wrap(ErrExecContextPharmaciesDB, err)
 	}
 
 	err := tx.Commit()
