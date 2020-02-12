@@ -19,9 +19,9 @@ run:
 	--host 0.0.0.0 \
 	--enable_sendmail=yes
 
-# update_frontend:
-# 	gcloud app deploy --version $(VERSION) frontend/app.yaml --project $(PROJECT) --promote -q
-#
+update_frontend:
+	gcloud app deploy --version $(VERSION) frontend/app.yaml --project $(PROJECT) --promote -q
+
 # update_endpoints:
 # 	gcloud app deploy --version $(VERSION) endpoints/app.yaml --project $(PROJECT) --promote -q
 #
