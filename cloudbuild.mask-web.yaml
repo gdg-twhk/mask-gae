@@ -1,0 +1,23 @@
+steps:
+- id: 'Update submodule'
+  name: gcr.io/cloud-builders/git
+  args: [
+      'submodule',
+      'update',
+      '--recursive',
+      '--remote'
+  ]
+  
+- id: "Install depdency"
+  name: 'gcr.io/cloud-builders/npm'
+  dir: 'mask-web'
+  args: ['install']
+
+- id: "Build mask-web"
+  name: 'gcr.io/cloud-builders/npm'
+  dir: 'mask-web'
+  args: [
+    'ng',
+    'build',
+    '--prod'
+  ]  
