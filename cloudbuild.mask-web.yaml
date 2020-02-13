@@ -46,6 +46,7 @@ steps:
     git submodule update --init --recursive
     cd frontend/mask-web
     git checkout -t origin/release
+    git pull
   volumes:
   - name: 'ssh'
     path: /root/.ssh
