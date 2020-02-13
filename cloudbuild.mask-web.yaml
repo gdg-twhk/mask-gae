@@ -46,6 +46,12 @@ steps:
     git submodule update --init --recursive
     cd frontend/mask-web
     git checkout -t origin/release
+    git pull
+    cd ../..
+    git add frontend/mask-web
+    git config --global user.email "you@example.com"
+    git config --global user.name "Your Name"
+    git commit -m 'swtich release to prepare release build'
   volumes:
   - name: 'ssh'
     path: /root/.ssh
@@ -68,7 +74,7 @@ steps:
   - |
     # get mask-web short sha
     maskWebShortSha=$(git ls-files -s frontend/mask-web  | awk '{print substr($2,0,7)}')
-    
+
     # deploy
     gcloud app deploy --version=${maskWebShortSha} frontend/app.yaml --no-promote -q
 
