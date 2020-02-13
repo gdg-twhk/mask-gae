@@ -97,6 +97,21 @@ func migrateDB(db *sqlx.DB) error {
 					alter table pharmacies drop column cunli;
 				`},
 			},
+			{
+				Id: "pharmacy_3",
+				Up: []string{`
+					alter table pharmacies alter column name set default '';
+					alter table pharmacies alter column phone set default '';
+					alter table pharmacies alter column address set default '';
+					alter table pharmacies alter column mask_adult set default 0;
+					alter table pharmacies alter column mask_child set default 0;
+					alter table pharmacies alter column available set default '';
+					alter table pharmacies alter column note set default '';
+					alter table pharmacies alter column longitude set default 0.0;
+					alter table pharmacies alter column latitude set default 0.0;
+				`},
+				Down: []string{``},
+			},
 		},
 	}
 
