@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
@@ -17,13 +16,6 @@ import (
 	"github.com/cage1016/mask/internal/pkg/errors"
 	"github.com/cage1016/mask/internal/pkg/level"
 	"github.com/cage1016/mask/internal/pkg/util"
-)
-
-var (
-	ProjectID  = os.Getenv("PROJECT_ID")
-	LocationID = "asia-east2"
-	QueueID    = "sync-points-queue2"
-	BucketID   = "mask-9999-pharmacies"
 )
 
 var l log.Logger
@@ -54,17 +46,22 @@ type PharmacyService interface {
 
 // the concrete implementation of service interface
 type stubPharmacyService struct {
-	logger log.Logger               `json:"logger"`
-	repo   model.PharmacyRepository `json:"repo"`
+	logger           log.Logger
+	repo             model.PharmacyRepository
+	projectID        string
+	locationID       string
+	queueID          string
+	bucketID         string
+	pointsObjectName string
 }
 
 // New return a new instance of the service.
 // If you want to add service middleware this is the place to put them.
-func New(repo model.PharmacyRepository, logger log.Logger) (s PharmacyService) {
+func New(repo model.PharmacyRepository, projectID, LocationID, QueueID, BucketID, PointsObjectName string, logger log.Logger) (s PharmacyService) {
 	var svc PharmacyService
 	{
 		l = logger
-		svc = &stubPharmacyService{repo: repo, logger: logger}
+		svc = &stubPharmacyService{repo: repo, logger: logger, projectID: projectID, locationID: LocationID, queueID: QueueID, bucketID: BucketID, pointsObjectName: PointsObjectName}
 		svc = LoggingMiddleware(logger)(svc)
 	}
 	return svc
@@ -85,7 +82,7 @@ func (st *stubPharmacyService) Sync(ctx context.Context) (err error) {
 	defer taskClient.Close()
 
 	// Build the Task queue path.
-	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", ProjectID, LocationID, QueueID)
+	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", st.projectID, st.locationID, st.queueID)
 
 	// Build the Task payload.
 	// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#CreateTaskRequest
@@ -125,7 +122,7 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
 	defer cancel()
 
-	rc, err := client.Bucket(BucketID).Object("/points.json").NewReader(ctx)
+	rc, err := client.Bucket(st.bucketID).Object(st.pointsObjectName).NewReader(ctx)
 	if err != nil {
 		level.Error(st.logger).Log("method", `client.Bucket(BucketID).Object("/points.json").NewReader(ctx)`, "err", err)
 		return errors.Wrap(ErrStorageReadObject, err)

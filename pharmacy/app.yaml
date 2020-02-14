@@ -5,16 +5,21 @@ runtime: go112
 instance_class: F4
 
 handlers:
-- url: /.*
-  script: auto
-  secure: always
+  - url: /.*
+    script: auto
+    secure: always
 
 env_variables:
-  PROJECT_ID: mask-9999
-  CLOUDSQL_CONNECTION_NAME: mask-9999:asia-east2:health-insurance-special-pharmacy
-  # Replace username and password if you aren't using the root user.
-  CLOUDSQL_USER: postgres
-  CLOUDSQL_PASSWORD: password
+  MASK_PHARMACY_PROJECT_ID: mask-9999
+  MASK_PHARMACY_LOCATION_ID: asia-east2
+  MASK_PHARMACY_QUEUE_ID: sync-points-queue2
+  MASK_PHARMACY_BUCKET_ID: mask-9999-pharmacies
+  MASK_PHARMACY_POINTS_OBJECT_NAME: /points.json
+  MASK_PHARMACY_DB_HOST: /cloudsql/mask-9999:asia-east2:health-insurance-special-pharmacy
+  MASK_PHARMACY_DB_PORT: 5432
+  MASK_PHARMACY_DB_USER: postgres
+  MASK_PHARMACY_DB_PASS: password
+  MASK_PHARMACY_DB: mask
 
 beta_settings:
   cloud_sql_instances: mask-9999:asia-east2:health-insurance-special-pharmacy

@@ -20,41 +20,56 @@ import (
 )
 
 const (
-	defServiceName   = "pharmacy"
-	defLogLevel      = "error"
-	defServiceHost   = "localhost"
-	defHTTPPort      = "8080"
-	defDBHost        = "/cloudsql/mask-9999:asia-east2:health-insurance-special-pharmacy"
-	defDBPort        = "5432"
-	defDBUser        = "postgres"
-	defDBPass        = "password"
-	defDBName        = "mask"
-	defDBSSLMode     = "disable"
-	defDBSSLCert     = ""
-	defDBSSLKey      = ""
-	defDBSSLRootCert = ""
+	defServiceName      = "pharmacy"
+	defLogLevel         = "error"
+	defServiceHost      = "localhost"
+	defHTTPPort         = "8080"
+	defDBHost           = ""
+	defDBPort           = ""
+	defDBUser           = ""
+	defDBPass           = ""
+	defDBName           = ""
+	defDBSSLMode        = "disable"
+	defDBSSLCert        = ""
+	defDBSSLKey         = ""
+	defDBSSLRootCert    = ""
+	defProjectID        = ""
+	defLocationID       = ""
+	defQueueID          = ""
+	defBucketID         = ""
+	defPointsObjectName = ""
 
-	envServiceName   = "MADK_PHARMACY_SERVICE_NAME"
-	envLogLevel      = "MADK_PHARMACY_LOG_LEVEL"
-	envServiceHost   = "MSSK_PHARMACY_SERVICE_HOST"
-	envHTTPPort      = "PORT"
-	envDBHost        = "MADK_PHARMACY_DB_HOST"
-	envDBPort        = "MADK_PHARMACY_DB_PORT"
-	envDBUser        = "MADK_PHARMACY_DB_USER"
-	envDBPass        = "MADK_PHARMACY_DB_PASS"
-	envDBName        = "MADK_PHARMACY_DB"
-	envDBSSLMode     = "MADK_PHARMACY_DB_SSL_MODE"
-	envDBSSLCert     = "MADK_PHARMACY_DB_SSL_CERT"
-	envDBSSLKey      = "MADK_PHARMACY_DB_SSL_KEY"
-	envDBSSLRootCert = "MADK_PHARMACY_DB_SSL_ROOT_CERT"
+	envServiceName      = "MASK_PHARMACY_SERVICE_NAME"
+	envLogLevel         = "MASK_PHARMACY_LOG_LEVEL"
+	envServiceHost      = "MASK_PHARMACY_SERVICE_HOST"
+	envHTTPPort         = "PORT"
+	envDBHost           = "MASK_PHARMACY_DB_HOST"
+	envDBPort           = "MASK_PHARMACY_DB_PORT"
+	envDBUser           = "MASK_PHARMACY_DB_USER"
+	envDBPass           = "MASK_PHARMACY_DB_PASS"
+	envDBName           = "MASK_PHARMACY_DB"
+	envDBSSLMode        = "MASK_PHARMACY_DB_SSL_MODE"
+	envDBSSLCert        = "MASK_PHARMACY_DB_SSL_CERT"
+	envDBSSLKey         = "MASK_PHARMACY_DB_SSL_KEY"
+	envDBSSLRootCert    = "MASK_PHARMACY_DB_SSL_ROOT_CERT"
+	envProjectID        = "MASK_PHARMACY_PROJECT_ID"
+	envLocationID       = "MASK_PHARMACY_LOCATION_ID"
+	envQueueID          = "MASK_PHARMACY_QUEUE_ID"
+	envBucketID         = "MASK_PHARMACY_BUCKET_ID"
+	envPointsObjectName = "MASK_PHARMACY_POINTS_OBJECT_NAME"
 )
 
 type config struct {
-	serviceName string
-	logLevel    string
-	serviceHost string
-	httpPort    string
-	dbConfig    postgres.Config
+	serviceName      string
+	logLevel         string
+	serviceHost      string
+	httpPort         string
+	dbConfig         postgres.Config
+	ProjectID        string
+	LocationID       string
+	QueueID          string
+	BucketID         string
+	PointsObjectName string
 }
 
 // Env reads specified environment variable. If no value has been found,
@@ -84,7 +99,7 @@ func main() {
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
-	service := NewServer(db, logger)
+	service := NewServer(db, cfg.ProjectID, cfg.LocationID, cfg.QueueID, cfg.BucketID, cfg.PointsObjectName, logger)
 	endpoints := endpoints.New(service, logger)
 
 	wg := &sync.WaitGroup{}
@@ -119,6 +134,11 @@ func loadConfig(logger log.Logger) (cfg config) {
 	cfg.logLevel = env(envLogLevel, defLogLevel)
 	cfg.serviceHost = env(envServiceHost, defServiceHost)
 	cfg.httpPort = env(envHTTPPort, defHTTPPort)
+	cfg.ProjectID = env(envProjectID, defProjectID)
+	cfg.LocationID = env(envLocationID, defLocationID)
+	cfg.QueueID = env(envQueueID, defQueueID)
+	cfg.BucketID = env(envBucketID, defBucketID)
+	cfg.PointsObjectName = env(envPointsObjectName, defPointsObjectName)
 	return cfg
 }
 
@@ -142,9 +162,9 @@ func connectToDB(cfg postgres.Config, logger log.Logger) *sqlx.DB {
 	return db
 }
 
-func NewServer(db *sqlx.DB, logger log.Logger) service.PharmacyService {
+func NewServer(db *sqlx.DB, projectID, LocationID, QueueID, BucketID, PointsObjectName string, logger log.Logger) service.PharmacyService {
 	repo := postgres.New(db, logger)
-	service := service.New(repo, logger)
+	service := service.New(repo, projectID, LocationID, QueueID, BucketID, PointsObjectName, logger)
 	return service
 }
 
