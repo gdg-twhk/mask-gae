@@ -6,7 +6,8 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+
+	"github.com/cage1016/mask/internal/pkg/level"
 )
 
 // LoggingMiddleware returns an endpoint middleware that logs the

@@ -10,12 +10,12 @@ import (
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/storage"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"github.com/lib/pq"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
 	"github.com/cage1016/mask/internal/app/pharmacy/model"
 	"github.com/cage1016/mask/internal/pkg/errors"
+	"github.com/cage1016/mask/internal/pkg/level"
 	"github.com/cage1016/mask/internal/pkg/util"
 )
 
@@ -25,6 +25,8 @@ var (
 	QueueID    = "sync-points-queue2"
 	BucketID   = "mask-9999-pharmacies"
 )
+
+var l log.Logger
 
 var (
 	ErrInvalidTask        = errors.New("Bad Request - Invalid Task")
@@ -61,6 +63,7 @@ type stubPharmacyService struct {
 func New(repo model.PharmacyRepository, logger log.Logger) (s PharmacyService) {
 	var svc PharmacyService
 	{
+		l = logger
 		svc = &stubPharmacyService{repo: repo, logger: logger}
 		svc = LoggingMiddleware(logger)(svc)
 	}
@@ -105,13 +108,13 @@ func (st *stubPharmacyService) Sync(ctx context.Context) (err error) {
 		return errors.Wrap(ErrTaskCreatFailed, err)
 	}
 
-	st.logger.Log("method", "taskClient.CreateTask", "task", createdTask)
+	level.Info(st.logger).Log("method", "taskClient.CreateTask", "task", createdTask)
 	return nil
 }
 
 // Implement the business logic of SyncHandler
 func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string, taskName string) (err error) {
-	st.logger.Log("method", "SyncHandler start", "queue", queueName, "task", taskName)
+	level.Info(st.logger).Log("method", "SyncHandler start", "queue", queueName, "task", taskName)
 	// Creates a client.
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -162,7 +165,11 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 	}
 
 	err = st.repo.Insert(ctx, pharmacies)
-	st.logger.Log("method", "SyncHandler done", "queue", queueName, "task", taskName, "err", err)
+	if err != nil {
+		level.Error(st.logger).Log("method", "SyncHandler done", "queue", queueName, "task", taskName, "err", err)
+	} else {
+		level.Info(st.logger).Log("method", "SyncHandler done", "queue", queueName, "task", taskName)
+	}
 	return err
 }
 
@@ -197,6 +204,7 @@ func (p *Properties) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, &pr); err != nil {
+		level.Warn(l).Log("method", "json.Unmarshal", "err", err, "properties", fmt.Sprintf("%+v", p))
 		return nil
 	}
 
