@@ -2,7 +2,7 @@ service: pharmacy
 
 runtime: go112
 
-instance_class: F2
+instance_class: F4
 
 handlers:
 - url: /.*

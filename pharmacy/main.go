@@ -28,7 +28,7 @@ const (
 	defDBPort        = "5432"
 	defDBUser        = "postgres"
 	defDBPass        = "password"
-	defDBName        = "stores"
+	defDBName        = "mask"
 	defDBSSLMode     = "disable"
 	defDBSSLCert     = ""
 	defDBSSLKey      = ""
