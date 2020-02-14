@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/cage1016/mask/internal/app/pharmacy/endpoints"
 	"github.com/cage1016/mask/internal/app/pharmacy/postgres"
 	"github.com/cage1016/mask/internal/app/pharmacy/service"
 	"github.com/cage1016/mask/internal/app/pharmacy/transports"
+	"github.com/cage1016/mask/internal/pkg/level"
 )
 
 const (
@@ -69,9 +69,9 @@ func env(key string, fallback string) string {
 func main() {
 	var logger log.Logger
 	{
-		logger = log.NewLogfmtLogger(os.Stderr)
+		logger = log.NewJSONLogger(os.Stderr)
 		logger = level.NewFilter(logger, level.AllowInfo())
-		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+		logger = log.With(logger, "timestamp", log.DefaultTimestampUTC)
 		logger = log.With(logger, "caller", log.DefaultCaller)
 	}
 	cfg := loadConfig(logger)

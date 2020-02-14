@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {	
+func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "ownershiop")
 }
 

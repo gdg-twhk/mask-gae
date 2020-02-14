@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/cage1016/mask/internal/app/pharmacy/model"
 	"github.com/cage1016/mask/internal/pkg/errors"
+	"github.com/cage1016/mask/internal/pkg/level"
 )
 
 var (
@@ -50,6 +50,7 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 	tx := s.db.MustBeginTx(ctx, nil)
 
 	if _, err := tx.ExecContext(ctx, `create table T as select * from pharmacies with no data;`); err != nil {
+		tx.Rollback()
 		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "create table T as select * from pharmacies with no data;", "err", err)
 		return errors.Wrap(ErrExecContextPharmaciesDB, err)
 	}
@@ -61,6 +62,7 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 
 	for _, store := range pharmacies {
 		if _, err := tx.NamedExecContext(ctx, q, store); err != nil {
+			tx.Rollback()
 			level.Error(s.log).Log("method", "tx.NamedExecContext", "err", err)
 			return errors.Wrap(ErrInsertOrUpdateToPharmaciesDB, err)
 		}
@@ -73,6 +75,7 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 
 	err := tx.Commit()
 	if err != nil {
+		level.Error(s.log).Log("method", "tx.Commit", "err", err)
 		return errors.Wrap(ErrTxCommit, err)
 	}
 
