@@ -66,13 +66,36 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 	ctx = context.Background()
 	tx := s.db.MustBeginTx(ctx, nil)
 
-	if _, err := tx.ExecContext(ctx, `create table t as select * from pharmacies with no data;`); err != nil {
+	q := `create table t
+			(
+				id varchar(10),
+				name varchar(254),
+				phone varchar(254),
+				address varchar(254),
+				mask_adult integer,
+				mask_child integer,
+				available varchar(1024),
+				note varchar(1024),
+				longitude double precision,
+				latitude double precision,
+				updated timestamp with time zone,
+				custom_note varchar(1024),
+				website varchar(1024),
+				service_periods varchar(21),
+				service_note varchar(1024),
+				county varchar(19),
+				town varchar(10),
+				cunli varchar(10)
+			);
+			alter table t owner to postgres;`
+
+	if _, err := tx.ExecContext(ctx, q); err != nil {
 		tx.Rollback()
 		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "create table T as select * from pharmacies with no data;", "err", err)
 		return errors.Wrap(ErrExecContextPharmaciesDB, err)
 	}
 
-	q := `INSERT INTO T (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude,
+	q = `INSERT INTO T (id, name, phone, address, mask_adult, mask_child, available, note, longitude, latitude,
 						   custom_note, website, updated, service_periods, service_note, county, town, cunli)
 			VALUES (:id, :name, :phone, :address, :mask_adult, :mask_child, :available, :note, :longitude, :latitude, :custom_note,
 					:website, :updated, :service_periods, :service_note, :county, :town, :cunli);`
@@ -91,7 +114,7 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 		return errors.Wrap(ErrSQLAdvisoryLockFromPharmaciesDB, err)
 	}
 
-	if _, err := tx.ExecContext(ctx, `select pg_advisory_xact_lock(0); drop table pharmacies; alter table t rename to pharmacies;`); err != nil {
+	if _, err := tx.ExecContext(ctx, `drop table pharmacies; alter table t rename to pharmacies;`); err != nil {
 		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "drop table pharmacies; alter table T rename to pharmacies;", "err", err)
 		return errors.Wrap(ErrExecContextPharmaciesDB, err)
 	}
