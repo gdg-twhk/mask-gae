@@ -12,10 +12,11 @@ import (
 )
 
 var (
-	ErrQueryStoreFromPharmaciesDB   = errors.New("query pharmacies from DB failed")
-	ErrInsertOrUpdateToPharmaciesDB = errors.New("insert or update DB failed")
-	ErrExecContextPharmaciesDB      = errors.New("exec context pharmacies DB failed")
-	ErrTxCommit                     = errors.New("Tx commit failed")
+	ErrQueryStoreFromPharmaciesDB      = errors.New("query pharmacies from DB failed")
+	ErrInsertOrUpdateToPharmaciesDB    = errors.New("insert or update DB failed")
+	ErrExecContextPharmaciesDB         = errors.New("exec context pharmacies DB failed")
+	ErrSQLAdvisoryLockFromPharmaciesDB = errors.New("psql advisory lock from from DB failed")
+	ErrTxCommit                        = errors.New("Tx commit failed")
 )
 
 var _ model.PharmacyRepository = (*pharmacyRepository)(nil)
@@ -32,14 +33,30 @@ func New(db *sqlx.DB, log log.Logger) model.PharmacyRepository {
 }
 
 func (s pharmacyRepository) Query(ctx context.Context, centerLng, centerLat, swLng, neLng, swLat, neLat float64, max uint64) ([]model.Pharmacy, error) {
+	ctx = context.Background()
+	tx := s.db.MustBeginTx(ctx, nil)
+
+	pharmacies := []model.Pharmacy{}
+	if _, err := tx.ExecContext(ctx, `select pg_advisory_xact_lock(0);`); err != nil {
+		tx.Rollback()
+		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "select pg_advisory_xact_lock(0);", "err", err)
+		return pharmacies, errors.Wrap(ErrSQLAdvisoryLockFromPharmaciesDB, err)
+	}
+
 	q := `SELECT *, point ($1, $2) <@> point(longitude, latitude)::point as distance
 			FROM (select * from pharmacies where longitude >= $3 and longitude <= $4 and latitude >= $5 and latitude <= $6) as a
 			ORDER BY distance limit $7;`
 
-	pharmacies := []model.Pharmacy{}
-	if err := s.db.SelectContext(ctx, &pharmacies, q, centerLng, centerLat, swLng, neLng, swLat, neLat, max); err != nil {
+	if err := tx.SelectContext(ctx, &pharmacies, q, centerLng, centerLat, swLng, neLng, swLat, neLat, max); err != nil {
+		tx.Rollback()
 		level.Error(s.log).Log("method", "s.db.SelectContext", "err", err)
 		return pharmacies, errors.Wrap(ErrQueryStoreFromPharmaciesDB, err)
+	}
+
+	err := tx.Commit()
+	if err != nil {
+		level.Error(s.log).Log("method", "tx.Commit", "err", err)
+		return pharmacies, errors.Wrap(ErrTxCommit, err)
 	}
 
 	return pharmacies, nil
@@ -49,7 +66,7 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 	ctx = context.Background()
 	tx := s.db.MustBeginTx(ctx, nil)
 
-	if _, err := tx.ExecContext(ctx, `create table T as select * from pharmacies with no data;`); err != nil {
+	if _, err := tx.ExecContext(ctx, `create table t as select * from pharmacies with no data;`); err != nil {
 		tx.Rollback()
 		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "create table T as select * from pharmacies with no data;", "err", err)
 		return errors.Wrap(ErrExecContextPharmaciesDB, err)
@@ -68,7 +85,13 @@ func (s pharmacyRepository) Insert(ctx context.Context, pharmacies []model.Pharm
 		}
 	}
 
-	if _, err := tx.ExecContext(ctx, `drop table pharmacies; alter table T rename to pharmacies;`); err != nil {
+	if _, err := tx.ExecContext(ctx, `select pg_advisory_xact_lock(0);`); err != nil {
+		tx.Rollback()
+		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "select pg_advisory_xact_lock(0);", "err", err)
+		return errors.Wrap(ErrSQLAdvisoryLockFromPharmaciesDB, err)
+	}
+
+	if _, err := tx.ExecContext(ctx, `select pg_advisory_xact_lock(0); drop table pharmacies; alter table t rename to pharmacies;`); err != nil {
 		level.Error(s.log).Log("method", "tx.ExecContext", "sql", "drop table pharmacies; alter table T rename to pharmacies;", "err", err)
 		return errors.Wrap(ErrExecContextPharmaciesDB, err)
 	}
