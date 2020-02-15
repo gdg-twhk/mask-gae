@@ -44,7 +44,7 @@ func (p *Pharmacy) MarshalJSON() ([]byte, error) {
 		Alias: (*Alias)(p),
 		Updated: func() string {
 			if p.Updated != nil {
-				return p.Updated.Time.In(util.Location).Format("2006-01-02T15:04:05-0700")
+				return p.Updated.Time.In(util.Location).Format(time.RFC3339)
 			}
 			return ""
 		}(),
