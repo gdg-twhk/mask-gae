@@ -79,3 +79,20 @@ func (r SyncHandlerResponse) Headers() http.Header {
 func (r SyncHandlerResponse) Response() interface{} {
 	return responses.DataRes{APIVersion: service.Version}
 }
+
+// FootGunResponse collects the response values for the FootGun method.
+type FootGunResponse struct {
+	Err error `json:"err,omitempty"`
+}
+
+func (r FootGunResponse) StatusCode() int {
+	return http.StatusOK // TBA
+}
+
+func (r FootGunResponse) Headers() http.Header {
+	return http.Header{}
+}
+
+func (r FootGunResponse) Response() interface{} {
+	return responses.DataRes{APIVersion: service.Version}
+}

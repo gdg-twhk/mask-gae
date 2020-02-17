@@ -38,6 +38,8 @@ type Middleware func(PharmacyService) PharmacyService
 type PharmacyService interface {
 	// [method=post,expose=true,router=api/pharmacies]
 	Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, seLng float64, seLat float64, swLng float64, swLat float64, nwLng float64, nwLat float64, max uint64) (items []model.Pharmacy, err error)
+	// [method=post,expose=true,router=api/pharmacies/footgun]
+	FootGun(ctx context.Context) (err error)
 	// [method=post,expose=true,router=api/pharmacies/sync]
 	Sync(ctx context.Context) (err error)
 	// [method=post,expose=true,router=api/pharmacies/sync_handler]
@@ -70,6 +72,11 @@ func New(repo model.PharmacyRepository, projectID, LocationID, QueueID, BucketID
 // Implement the business logic of Query
 func (st *stubPharmacyService) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, _ float64, _ float64, swLng float64, swLat float64, _ float64, _ float64, max uint64) (items []model.Pharmacy, err error) {
 	return st.repo.Query(ctx, centerLng, centerLat, swLng, neLng, swLat, neLat, max)
+}
+
+// Implement the business logic of FootGun
+func (ph *stubPharmacyService) FootGun(ctx context.Context) (err error) {
+	return ph.repo.FootGun(ctx)
 }
 
 // Implement the business logic of Sync

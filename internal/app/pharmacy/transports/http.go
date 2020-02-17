@@ -49,6 +49,12 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 		encodeJSONResponse,
 		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
 	))
+	m.Post("/api/pharmacies/footgun", httptransport.NewServer(
+		endpoints.FootGunEndpoint,
+		decodeHTTPFootGunRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
 	return cors.AllowAll().Handler(m)
 }
 
@@ -87,6 +93,14 @@ func decodeHTTPSyncHandlerRequest(_ context.Context, r *http.Request) (interface
 	}
 
 	req.TaskName = t[0]
+	return req, nil
+}
+
+// decodeHTTPFootGunRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPFootGunRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.FootGunRequest
+	//err := json.NewDecoder(r.Body).Decode(&req)
 	return req, nil
 }
 

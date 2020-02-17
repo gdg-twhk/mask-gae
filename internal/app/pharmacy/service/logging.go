@@ -45,3 +45,11 @@ func (lm loggingMiddleware) SyncHandler(ctx context.Context, queueName string, t
 
 	return lm.next.SyncHandler(ctx, queueName, taskName)
 }
+
+func (lm loggingMiddleware) FootGun(ctx context.Context) (err error) {
+	defer func() {
+		lm.logger.Log("method", "FootGun", "err", err)
+	}()
+
+	return lm.next.FootGun(ctx)
+}

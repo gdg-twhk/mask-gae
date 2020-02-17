@@ -128,3 +128,11 @@ func (s pharmacyRepository) GetLatestPharmacyTableName(ctx context.Context) (str
 	}
 	return lt.TableName, nil
 }
+
+func (s pharmacyRepository) FootGun(ctx context.Context) error {
+	if _, err := s.db.ExecContext(ctx, `select footgun('pharmacy_%', 5)`); err != nil {
+		level.Error(s.log).Log("method", "s.db.ExecContext", "sql", `select footgun('pharmacy_%', 5)`, "err", err)
+		return err
+	}
+	return nil
+}
