@@ -113,6 +113,7 @@ func (s pharmacyRepository) Insert(ctx context.Context, updated string, pharmaci
 		return err
 	}
 	t = buf
+	level.Info(s.log).Log("latestTableNamex", t)
 
 	return nil
 }
@@ -124,6 +125,7 @@ func (s pharmacyRepository) GetLatestPharmacyTableName(ctx context.Context) (str
 
 	q := `select table_name from latest_pharmacy_table;`
 	if err := s.db.GetContext(ctx, &lt, q); err != nil {
+		level.Error(s.log).Log("method", "GetLatestPharmacyTableName", "err", err)
 		return "", err
 	}
 	return lt.TableName, nil
