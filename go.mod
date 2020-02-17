@@ -10,7 +10,8 @@ require (
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/go-zoo/bone v1.3.0
-	github.com/jmoiron/sqlx v1.2.0
+	github.com/gomurphyx/sqlx v1.3.0
+	github.com/jmoiron/sqlx v1.2.0 // indirect
 	github.com/lib/pq v1.3.0
 	github.com/rs/cors v1.7.0
 	github.com/rubenv/sql-migrate v0.0.0-20200119084958-8794cecc920c

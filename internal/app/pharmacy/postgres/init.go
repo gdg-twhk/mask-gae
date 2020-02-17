@@ -3,7 +3,7 @@ package postgres
 import (
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/gomurphyx/sqlx"
 	_ "github.com/lib/pq" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
 )
@@ -111,6 +111,51 @@ func migrateDB(db *sqlx.DB) error {
 					alter table pharmacies alter column latitude set default 0.0;
 				`},
 				Down: []string{``},
+			},
+			{
+				Id: "pharmacy_4",
+				Up: []string{`
+					create or replace view latest_pharmacy_table as
+					SELECT table_schema,
+						   table_name
+					FROM information_schema.tables
+					WHERE table_type = 'BASE TABLE'
+					  AND table_schema = 'public'
+					  and table_name like 'pharmacy_%'
+					order by table_name desc
+					limit 1;
+
+					CREATE OR REPLACE FUNCTION footgun(IN _tablename TEXT, IN _keepcount int)
+						RETURNS void
+						LANGUAGE plpgsql
+					AS
+					$$
+					DECLARE
+						row record;
+					BEGIN
+						FOR row IN
+							SELECT table_schema,
+								   table_name
+							FROM information_schema.tables
+							where table_name not in (
+								SELECT table_name
+								FROM information_schema.tables
+								WHERE table_type = 'BASE TABLE'
+								  AND table_schema = 'public'
+								  and table_name like _tablename
+								order by table_name desc
+								limit _keepcount
+							)
+							  AND table_schema = 'public'
+							  and table_name like _tablename
+							LOOP
+								EXECUTE 'DROP TABLE ' || quote_ident(row.table_schema) || '.' || quote_ident(row.table_name);
+								RAISE INFO 'Dropped table: %', quote_ident(row.table_schema) || '.' || quote_ident(row.table_name);
+							END LOOP;
+					END;
+					$$;
+				`},
+				Down: []string{},
 			},
 		},
 	}

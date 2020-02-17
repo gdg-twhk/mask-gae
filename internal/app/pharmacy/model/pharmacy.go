@@ -12,6 +12,21 @@ import (
 
 var location *time.Location
 
+type Pharmacies []Pharmacy
+
+func (p Pharmacies) Split(limit int) [][]Pharmacy {
+	var chunk []Pharmacy
+	chunks := make([][]Pharmacy, 0, len(p)/limit+1)
+	for len(p) >= limit {
+		chunk, p = p[:limit], p[limit:]
+		chunks = append(chunks, chunk)
+	}
+	if len(p) > 0 {
+		chunks = append(chunks, p[:len(p)])
+	}
+	return chunks
+}
+
 type Pharmacy struct {
 	Id             string       `json:"id" db:"id"`
 	Distance       float64      `json:"distance" db:"distance"`
@@ -53,5 +68,5 @@ func (p *Pharmacy) MarshalJSON() ([]byte, error) {
 
 type PharmacyRepository interface {
 	Query(context.Context, float64, float64, float64, float64, float64, float64, uint64) ([]Pharmacy, error)
-	Insert(context.Context, []Pharmacy) error
+	Insert(context.Context, string, [][]Pharmacy) error
 }

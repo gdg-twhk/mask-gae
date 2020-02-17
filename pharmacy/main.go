@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/jmoiron/sqlx"
+	"github.com/gomurphyx/sqlx"
 
 	"github.com/cage1016/mask/internal/app/pharmacy/endpoints"
 	"github.com/cage1016/mask/internal/app/pharmacy/postgres"

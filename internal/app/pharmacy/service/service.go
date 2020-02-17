@@ -136,8 +136,14 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 		return errors.Wrap(ErrMalformedEntity, err)
 	}
 
-	pharmacies := make([]model.Pharmacy, len(req.Features))
+	var updated string
+	pharmacies := make(model.Pharmacies, len(req.Features))
 	for i, f := range req.Features {
+		if updated == "" {
+			if f.Properties.Updated.Valid {
+				updated = f.Properties.Updated.Time.In(util.Location).Format("2006_0102_1504")
+			}
+		}
 		pharmacy := model.Pharmacy{
 			Id:             f.Properties.Id,
 			Name:           f.Properties.Name,
@@ -161,11 +167,11 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 		pharmacies[i] = pharmacy
 	}
 
-	err = st.repo.Insert(ctx, pharmacies)
+	err = st.repo.Insert(ctx, updated, pharmacies.Split(500))
 	if err != nil {
-		level.Error(st.logger).Log("method", "SyncHandler done", "queue", queueName, "task", taskName, "err", err)
+		level.Error(st.logger).Log("method", "st.repo.Insert", "queue", queueName, "task", taskName, "err", err)
 	} else {
-		level.Info(st.logger).Log("method", "SyncHandler done", "queue", queueName, "task", taskName)
+		level.Info(st.logger).Log("method", "st.repo.Insert", "queue", queueName, "task", taskName)
 	}
 	return err
 }
