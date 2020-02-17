@@ -44,3 +44,11 @@ type SyncHandlerRequest struct {
 func (r SyncHandlerRequest) validate() error {
 	return nil // TBA
 }
+
+// FootGunRequest collects the request parameters for the FootGun method.
+type FootGunRequest struct {
+}
+
+func (r FootGunRequest) validate() error {
+	return nil // TBA
+}

@@ -38,6 +38,8 @@ type Middleware func(PharmacyService) PharmacyService
 type PharmacyService interface {
 	// [method=post,expose=true,router=api/pharmacies]
 	Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, seLng float64, seLat float64, swLng float64, swLat float64, nwLng float64, nwLat float64, max uint64) (items []model.Pharmacy, err error)
+	// [method=post,expose=true,router=api/pharmacies/footgun]
+	FootGun(ctx context.Context) (err error)
 	// [method=post,expose=true,router=api/pharmacies/sync]
 	Sync(ctx context.Context) (err error)
 	// [method=post,expose=true,router=api/pharmacies/sync_handler]
@@ -70,6 +72,11 @@ func New(repo model.PharmacyRepository, projectID, LocationID, QueueID, BucketID
 // Implement the business logic of Query
 func (st *stubPharmacyService) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, _ float64, _ float64, swLng float64, swLat float64, _ float64, _ float64, max uint64) (items []model.Pharmacy, err error) {
 	return st.repo.Query(ctx, centerLng, centerLat, swLng, neLng, swLat, neLat, max)
+}
+
+// Implement the business logic of FootGun
+func (ph *stubPharmacyService) FootGun(ctx context.Context) (err error) {
+	return ph.repo.FootGun(ctx)
 }
 
 // Implement the business logic of Sync
@@ -136,8 +143,14 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 		return errors.Wrap(ErrMalformedEntity, err)
 	}
 
-	pharmacies := make([]model.Pharmacy, len(req.Features))
+	var updated string
+	pharmacies := make(model.Pharmacies, len(req.Features))
 	for i, f := range req.Features {
+		if updated == "" {
+			if f.Properties.Updated.Valid {
+				updated = f.Properties.Updated.Time.In(util.Location).Format("2006_0102_150405")
+			}
+		}
 		pharmacy := model.Pharmacy{
 			Id:             f.Properties.Id,
 			Name:           f.Properties.Name,
@@ -161,11 +174,11 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 		pharmacies[i] = pharmacy
 	}
 
-	err = st.repo.Insert(ctx, pharmacies)
+	err = st.repo.Insert(ctx, updated, pharmacies.Split(500))
 	if err != nil {
-		level.Error(st.logger).Log("method", "SyncHandler done", "queue", queueName, "task", taskName, "err", err)
+		level.Error(st.logger).Log("method", "st.repo.Insert", "queue", queueName, "task", taskName, "err", err)
 	} else {
-		level.Info(st.logger).Log("method", "SyncHandler done", "queue", queueName, "task", taskName)
+		level.Info(st.logger).Log("method", "st.repo.Insert", "queue", queueName, "task", taskName)
 	}
 	return err
 }

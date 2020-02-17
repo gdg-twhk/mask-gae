@@ -49,6 +49,12 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 		encodeJSONResponse,
 		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
 	))
+	m.Post("/api/pharmacies/footgun", httptransport.NewServer(
+		endpoints.FootGunEndpoint,
+		decodeHTTPFootGunRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
 	return cors.AllowAll().Handler(m)
 }
 
@@ -72,21 +78,29 @@ func decodeHTTPSyncRequest(_ context.Context, r *http.Request) (interface{}, err
 // JSON-encoded request from the HTTP request body. Primarily useful in a server.
 func decodeHTTPSyncHandlerRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.SyncHandlerRequest
+	//
+	//t, ok := r.Header["X-Appengine-Taskname"]
+	//if !ok || len(t[0]) == 0 {
+	//	// You may use the presence of the X-Appengine-Taskname header to validate
+	//	// the request comes from Cloud Tasks.
+	//	return nil, service.ErrInvalidTask
+	//}
+	//
+	//// Pull useful headers from Task request.
+	//q, ok := r.Header["X-Appengine-Queuename"]
+	//if ok {
+	//	req.TaskName = q[0]
+	//}
+	//
+	//req.TaskName = t[0]
+	return req, nil
+}
 
-	t, ok := r.Header["X-Appengine-Taskname"]
-	if !ok || len(t[0]) == 0 {
-		// You may use the presence of the X-Appengine-Taskname header to validate
-		// the request comes from Cloud Tasks.
-		return nil, service.ErrInvalidTask
-	}
-
-	// Pull useful headers from Task request.
-	q, ok := r.Header["X-Appengine-Queuename"]
-	if ok {
-		req.TaskName = q[0]
-	}
-
-	req.TaskName = t[0]
+// decodeHTTPFootGunRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPFootGunRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.FootGunRequest
+	//err := json.NewDecoder(r.Body).Decode(&req)
 	return req, nil
 }
 
