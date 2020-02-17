@@ -78,21 +78,21 @@ func decodeHTTPSyncRequest(_ context.Context, r *http.Request) (interface{}, err
 // JSON-encoded request from the HTTP request body. Primarily useful in a server.
 func decodeHTTPSyncHandlerRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.SyncHandlerRequest
-
-	t, ok := r.Header["X-Appengine-Taskname"]
-	if !ok || len(t[0]) == 0 {
-		// You may use the presence of the X-Appengine-Taskname header to validate
-		// the request comes from Cloud Tasks.
-		return nil, service.ErrInvalidTask
-	}
-
-	// Pull useful headers from Task request.
-	q, ok := r.Header["X-Appengine-Queuename"]
-	if ok {
-		req.TaskName = q[0]
-	}
-
-	req.TaskName = t[0]
+	//
+	//t, ok := r.Header["X-Appengine-Taskname"]
+	//if !ok || len(t[0]) == 0 {
+	//	// You may use the presence of the X-Appengine-Taskname header to validate
+	//	// the request comes from Cloud Tasks.
+	//	return nil, service.ErrInvalidTask
+	//}
+	//
+	//// Pull useful headers from Task request.
+	//q, ok := r.Header["X-Appengine-Queuename"]
+	//if ok {
+	//	req.TaskName = q[0]
+	//}
+	//
+	//req.TaskName = t[0]
 	return req, nil
 }
 
