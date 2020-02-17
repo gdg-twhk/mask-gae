@@ -148,7 +148,7 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 	for i, f := range req.Features {
 		if updated == "" {
 			if f.Properties.Updated.Valid {
-				updated = f.Properties.Updated.Time.In(util.Location).Format("2006_0102_1504")
+				updated = f.Properties.Updated.Time.In(util.Location).Format("2006_0102_150405")
 			}
 		}
 		pharmacy := model.Pharmacy{
