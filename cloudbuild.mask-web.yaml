@@ -45,23 +45,23 @@ steps:
         git reset "$COMMIT_SHA"
         git submodule sync --recursive
         git submodule update --init --recursive
-        cd cmd/frontend/mask-web
+        cd website/mask-web
         git checkout -t origin/release
         git pull
-        cd ../../..
-        git add cmd/frontend/mask-web
+        cd ../..
+        git add website/mask-web
         git commit -m 'swtich release to prepare release build'
     volumes:
       - name: 'ssh'
         path: /root/.ssh
 
   - name: 'gcr.io/cloud-builders/npm'
-    dir: 'cmd/frontend/mask-web'
+    dir: 'website/mask-web'
     args:
       - install
 
   - name: 'gcr.io/mask-9999/ng:v9'
-    dir: 'cmd/frontend/mask-web'
+    dir: 'website/mask-web'
     args:
       - build
       - --prod
@@ -72,7 +72,7 @@ steps:
       - '-c'
       - |
         # get mask-web short sha
-        maskWebShortSha=$(git ls-files -s cmd/frontend/mask-web  | awk '{print substr($2,0,7)}')
+        maskWebShortSha=$(git ls-files -s website/mask-web  | awk '{print substr($2,0,7)}')
 
         # deploy
         gcloud app deploy --version=${maskWebShortSha} frontend/app.yaml --no-promote -q
