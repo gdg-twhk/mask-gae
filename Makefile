@@ -1,57 +1,24 @@
-ACCOUNT = cage.chung@gmail.com
-PROJECT = mask-9999
-# VERSION = 4c833b1makm
-VERSION = 4
+ACCOUNT = $(shell gcloud auth list --filter=status:ACTIVE --format='value(account)')
+PROJECT = $(shell gcloud config list --format 'value(core.project)')
+VERSION = $(shell git rev-parse --short HEAD)
 
-NODE_BIN = $(shell npm bin)
+all: help
 
-set_config:
-	gcloud config set account $(ACCOUNT)
-	gcloud config set project $(PROJECT)
-
-run:
-	dev_appserver.py \
-	dispatch.yaml \
-	ownership/app.yaml \
-	frontend/app.yaml \
-	endpoints/app.yaml \
-	--skip_sdk_update_check=yes \
-	--host 0.0.0.0 \
-	--enable_sendmail=yes
-
-update_frontend:
-	gcloud app deploy --version $(VERSION) frontend/app.yaml --project $(PROJECT) --promote -q
-
-# update_endpoints:
-# 	gcloud app deploy --version $(VERSION) endpoints/app.yaml --project $(PROJECT) --promote -q
-#
-# update_ownership:
-# 	gcloud app deploy --version=$(VERSION) ownership/app.yaml --project $(PROJECT) --promote -q
-#
-update_pharmacy:
-	gcloud app deploy --version=0-1 pharmacy/app.yaml --project $(PROJECT) --promote -q
+## deploy_pharmacy [v=version-name]: deploy pharmacy service
+deploy_pharmacy:
+ifdef v
+	gcloud app deploy --version ${v} --project ${PROJECT} -q cmd/pharmacy/app.yaml
+else
+	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/pharmacy/app.yaml
+endif
 
 
-update_dispatch:
-	gcloud app deploy --version=$(VERSION)  dispatch.yaml --project $(PROJECT) -q
-#
-# update: update_frontend update_endpoints update_ownership update_dispatch
-# update: update_frontend update_endpoints
+.PHONY: all help
 
-
-
-sql:
-	./cloud_sql_proxy -instances=mask-9999:asia-east2:health-insurance-special-pharmacy=tcp:5432
-
-cmdpharmacy:
-	MASK_PHARMACY_PROJECT_ID=mask-9999 \
-	MASK_PHARMACY_LOCATION_ID=asia-east2 \
-	MASK_PHARMACY_QUEUE_ID=sync-points-queue2 \
-	MASK_PHARMACY_BUCKET_ID=mask-9999-pharmacies \
-	MASK_PHARMACY_POINTS_OBJECT_NAME=/points.json \
-	MASK_PHARMACY_DB_HOST="localhost" \
-	MASK_PHARMACY_DB_PORT=5432 \
-	MASK_PHARMACY_DB_USER=postgres \
-	MASK_PHARMACY_DB_PASS=password \
-	MASK_PHARMACY_DB=mask \
-	go run pharmacy/main.go
+help:
+	@echo "Usage: \n"
+	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
+	@echo ""
+	@for var in $(helps); do \
+		echo $$var; \
+	done | column -t -s ':' |  sed -e 's/^/  /'
