@@ -1,0 +1,14 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build', '.',
+        '--tag=gcr.io/$PROJECT_ID/ng:v9',
+        '--file=Dockerfile',
+        '--build-arg', 'ng_version=9.0.0',
+      ]
+
+images:
+  - 'gcr.io/$PROJECT_ID/ng:v9'
+
+tags: ['cloud-builders-community']
