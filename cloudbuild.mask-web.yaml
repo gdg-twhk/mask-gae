@@ -75,7 +75,7 @@ steps:
         maskWebShortSha=$(git ls-files -s website/mask-web  | awk '{print substr($2,0,7)}')
 
         # deploy
-        gcloud app deploy --version=${maskWebShortSha} frontend/app.yaml --no-promote -q
+        gcloud app deploy --version=${maskWebShortSha} website/app.yaml --no-promote -q
 
         echo "deploy succeeded."
 
