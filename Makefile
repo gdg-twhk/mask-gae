@@ -7,9 +7,17 @@ all: help
 ## deploy_pharmacy [v=version-name]: deploy pharmacy service
 deploy_pharmacy:
 ifdef v
-	gcloud app deploy --version ${v} --project ${PROJECT} -q cmd/pharmacy/app.yaml
+	gcloud app deploy --version ${v} --project ${PROJECT} -q cmd/pharmacy/app.yaml --no-promote
 else
-	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/pharmacy/app.yaml
+	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/pharmacy/app.yaml --no-promote
+endif
+
+## deploy_ws [v=version-name]: deploy ws service
+deploy_ws:
+ifdef v
+	gcloud app deploy --version ${v} --project ${PROJECT} -q cmd/ws/app.yaml
+else
+	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/wsmake/app.yaml
 endif
 
 ## deploy_dispatch: deploy disptach

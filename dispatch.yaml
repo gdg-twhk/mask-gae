@@ -5,6 +5,9 @@ dispatch:
   - url: "*/api/pharmacies*"
     module: pharmacy
 
+  - url: "*/ws*"
+    module: ws
+
   - url: "*/googleae8f4bcce8bec00c.html"
     module: ownership
 

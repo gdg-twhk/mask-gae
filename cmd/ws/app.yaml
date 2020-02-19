@@ -1,0 +1,15 @@
+service: ws
+
+runtime: go
+env: flex
+
+# https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml
+manual_scaling:
+  instances: 1
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10
+
+env_variables:
+  QS_NATS_URL: nats:QE49VmP11dV2@10.170.0.2:4222
