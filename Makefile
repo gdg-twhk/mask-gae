@@ -12,6 +12,10 @@ else
 	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/pharmacy/app.yaml
 endif
 
+## deploy_dispatch: deploy disptach
+deploy_dispatch:
+	gcloud app deploy --project ${PROJECT} -q dispatch.yaml
+
 
 .PHONY: all help
 
