@@ -1,3 +1,3 @@
-[submodule "frontend/mask-web"]
-	path = frontend/mask-web
+[submodule "website/mask-web"]
+	path = website/mask-web
 	url = git@github.com:chgc/mask-web.git
