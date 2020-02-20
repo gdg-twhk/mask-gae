@@ -18,6 +18,13 @@ ifdef v
 	gcloud app deploy --version ${v} --project ${PROJECT} -q cmd/docs/app.yaml
 else
 	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/docs/app.yaml
+
+## deploy_feedback [v=version-name]: deploy feedback service
+deploy_feedback:
+ifdef v
+	gcloud app deploy --version ${v} --project ${PROJECT} -q cmd/feedback/app.yaml
+else
+	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/feedback/app.yaml
 endif
 
 ## deploy_dispatch: deploy disptach
