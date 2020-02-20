@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/gomurphyx/sqlx"
 
+	"github.com/cage1016/mask/internal/pkg/util"
 	"github.com/cage1016/mask/internal/app/feedback/model"
 	"github.com/cage1016/mask/internal/pkg/errors"
 	"github.com/cage1016/mask/internal/pkg/level"
@@ -31,7 +32,7 @@ func New(db *sqlx.DB, log log.Logger) model.FeedbackRepository {
 }
 
 func (f feedbackRepository) Insert(ctx context.Context, feedback model.Feedback) (string, error) {
-	nt := fmt.Sprintf("feedback_%s", time.Now().Format("2006_0102"))
+	nt := fmt.Sprintf("feedback_%s", time.Now().In(util.Location).Format("2006_0102"))
 	level.Info(f.log).Log("table", nt)
 
 	err := f.GetLatestFeedbackTableName(ctx, nt)
