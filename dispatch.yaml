@@ -8,6 +8,9 @@ dispatch:
   - url: "*/docs*"
     module: docs
 
+  - url: "*/api/feedback*"
+    module: feedback
+
   - url: "*/googleae8f4bcce8bec00c.html"
     module: ownership
 
