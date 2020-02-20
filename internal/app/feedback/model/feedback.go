@@ -14,7 +14,7 @@ type Option struct {
 type Feedback struct {
 	ID          string    `json:"id" db:"id"`
 	UserID      string    `json:"userId" db:"user_id"`
-	PharmacyID  string    `json:"storeId" db:"pharmacy_id"`
+	PharmacyID  string    `json:"pharmacyId" db:"pharmacy_id"`
 	OptionID    string    `json:"optionId" db:"option_id"`
 	Description string    `json:"description" db:"description"`
 	Longitude   float64   `json:"longitude" db:"longitude"`
