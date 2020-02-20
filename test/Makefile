@@ -12,4 +12,4 @@ cmdpharmacy:
 	MASK_PHARMACY_DB_USER=postgres \
 	MASK_PHARMACY_DB_PASS=password \
 	MASK_PHARMACY_DB=mask \
-	go run cmd/pharmacy/main.go
+	go run ../cmd/pharmacy/main.go

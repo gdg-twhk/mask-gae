@@ -17,6 +17,7 @@ import (
 	"github.com/cage1016/mask/internal/app/pharmacy/service"
 	"github.com/cage1016/mask/internal/app/pharmacy/transports"
 	"github.com/cage1016/mask/internal/pkg/level"
+	psql "github.com/cage1016/mask/internal/pkg/postgres"
 )
 
 const (
@@ -64,7 +65,7 @@ type config struct {
 	logLevel         string
 	serviceHost      string
 	httpPort         string
-	dbConfig         postgres.Config
+	dbConfig         psql.Config
 	ProjectID        string
 	LocationID       string
 	QueueID          string
@@ -117,7 +118,7 @@ func main() {
 }
 
 func loadConfig(logger log.Logger) (cfg config) {
-	dbConfig := postgres.Config{
+	dbConfig := psql.Config{
 		Host:        env(envDBHost, defDBHost),
 		Port:        env(envDBPort, defDBPort),
 		User:        env(envDBUser, defDBUser),
@@ -142,8 +143,8 @@ func loadConfig(logger log.Logger) (cfg config) {
 	return cfg
 }
 
-func connectToDB(cfg postgres.Config, logger log.Logger) *sqlx.DB {
-	db, err := postgres.Connect(cfg)
+func connectToDB(cfg psql.Config, logger log.Logger) *sqlx.DB {
+	db, err := psql.Connect(cfg)
 	if err != nil {
 		level.Error(logger).Log(
 			"host", cfg.Host,
