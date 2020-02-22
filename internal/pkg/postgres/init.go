@@ -157,27 +157,6 @@ func migrateDB(db *sqlx.DB) error {
 				`},
 				Down: []string{},
 			},
-			{
-				Id: "feedback_1",
-				Up: []string{`
-					create table if not exists options
-					(
-						id   varchar(21)  not null
-							constraint options_pkey
-								primary key,
-						name varchar(254) not null
-					);
-					
-					alter table options
-						owner to postgres;
-
-					INSERT INTO public.options (id, name) VALUES ('IRESxM58KC~dqg5XLCH~n', '自訂') ON CONFLICT (id) DO NOTHING;
-					INSERT INTO public.options (id, name) VALUES ('ddCp1m88O4g5SU1GDJRPi', '當天已售完') ON CONFLICT (id) DO NOTHING;;
-					INSERT INTO public.options (id, name) VALUES ('uYrYL~7Gd65IN2wWsWa9A', '號碼牌已發送完畢') ON CONFLICT (id) DO NOTHING;;
-					INSERT INTO public.options (id, name) VALUES ('nAn6pj8UkrXST1syShrzV', '發放號碼牌') ON CONFLICT (id) DO NOTHING;;
-				`},
-				Down: []string{``},
-			},
 		},
 	}
 

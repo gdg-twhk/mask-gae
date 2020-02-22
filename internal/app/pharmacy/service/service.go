@@ -44,8 +44,6 @@ type PharmacyService interface {
 	Sync(ctx context.Context) (err error)
 	// [method=post,expose=true,router=api/pharmacies/sync_handler]
 	SyncHandler(ctx context.Context, queueName string, taskName string) (err error)
-	// [method=get,expose=true,router=api/pharmacies/health_check]
-	HealthCheck(ctx context.Context) (updated string, err error)
 }
 
 // the concrete implementation of service interface
@@ -183,10 +181,6 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 		level.Info(st.logger).Log("method", "st.repo.Insert", "queue", queueName, "task", taskName)
 	}
 	return err
-}
-
-func (st *stubPharmacyService) HealthCheck(ctx context.Context) (string, error) {
-	return st.repo.Latest(ctx)
 }
 
 type Properties struct {
