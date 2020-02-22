@@ -70,4 +70,5 @@ type PharmacyRepository interface {
 	Query(context.Context, float64, float64, float64, float64, float64, float64, uint64) ([]Pharmacy, error)
 	Insert(context.Context, string, [][]Pharmacy) error
 	FootGun(ctx context.Context) error
+	Latest(context.Context) (string, error)
 }

@@ -55,6 +55,12 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 		encodeJSONResponse,
 		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
 	))
+	m.Get("/api/pharmacies/health_check", httptransport.NewServer(
+		endpoints.HealthCheckEndpoint,
+		decodeHTTPHealthCheckRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
 	return cors.AllowAll().Handler(m)
 }
 
@@ -100,6 +106,14 @@ func decodeHTTPSyncHandlerRequest(_ context.Context, r *http.Request) (interface
 // JSON-encoded request from the HTTP request body. Primarily useful in a server.
 func decodeHTTPFootGunRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.FootGunRequest
+	//err := json.NewDecoder(r.Body).Decode(&req)
+	return req, nil
+}
+
+// decodeHTTPHealthCheckRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPHealthCheckRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.HealthCheckRequest
 	//err := json.NewDecoder(r.Body).Decode(&req)
 	return req, nil
 }

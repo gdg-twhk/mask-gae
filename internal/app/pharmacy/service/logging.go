@@ -53,3 +53,11 @@ func (lm loggingMiddleware) FootGun(ctx context.Context) (err error) {
 
 	return lm.next.FootGun(ctx)
 }
+
+func (lm loggingMiddleware) HealthCheck(ctx context.Context) (updated string, err error) {
+	defer func() {
+		lm.logger.Log("method", "HealthCheck", "err", err)
+	}()
+
+	return lm.next.HealthCheck(ctx)
+}
