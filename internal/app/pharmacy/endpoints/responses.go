@@ -96,3 +96,21 @@ func (r FootGunResponse) Headers() http.Header {
 func (r FootGunResponse) Response() interface{} {
 	return responses.DataRes{APIVersion: service.Version}
 }
+
+// HealthCheckResponse collects the response values for the FootGun method.
+type HealthCheckResponse struct {
+	Updated string `json:"updated"`
+	Err     error  `json:"err,omitempty"`
+}
+
+func (r HealthCheckResponse) StatusCode() int {
+	return http.StatusOK // TBA
+}
+
+func (r HealthCheckResponse) Headers() http.Header {
+	return http.Header{}
+}
+
+func (r HealthCheckResponse) Response() interface{} {
+	return responses.DataRes{APIVersion: service.Version, Data: r.Updated}
+}

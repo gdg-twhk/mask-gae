@@ -52,3 +52,11 @@ type FootGunRequest struct {
 func (r FootGunRequest) validate() error {
 	return nil // TBA
 }
+
+// HealthCheckRequest collects the request parameters for the FootGun method.
+type HealthCheckRequest struct {
+}
+
+func (r HealthCheckRequest) validate() error {
+	return nil // TBA
+}
