@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/gomurphyx/sqlx"
@@ -10,6 +11,7 @@ import (
 	"github.com/cage1016/mask/internal/app/pharmacy/model"
 	"github.com/cage1016/mask/internal/pkg/errors"
 	"github.com/cage1016/mask/internal/pkg/level"
+	"github.com/cage1016/mask/internal/pkg/util"
 )
 
 var (
@@ -137,4 +139,24 @@ func (s pharmacyRepository) FootGun(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func (s pharmacyRepository) Latest(ctx context.Context) (updated string, err error) {
+	if t == "" {
+		buf, err := s.GetLatestPharmacyTableName(ctx)
+		if err != nil {
+			return "", err
+		}
+		t = buf
+	}
+
+	lt := struct {
+		Updated time.Time `db:"updated"`
+	}{}
+	q := fmt.Sprintf(`select updated from %s limit 1;`, t)
+	if err := s.db.GetContext(ctx, &lt, q); err != nil {
+		level.Error(s.log).Log("method", "s.db.GetContext", "err", err)
+		return "", err
+	}
+	return lt.Updated.In(util.Location).Format(time.RFC3339), nil
 }

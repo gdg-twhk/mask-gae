@@ -18,6 +18,7 @@ type Endpoints struct {
 	SyncEndpoint        endpoint.Endpoint `json:""`
 	SyncHandlerEndpoint endpoint.Endpoint `json:""`
 	FootGunEndpoint     endpoint.Endpoint `json:""`
+	HealthCheckEndpoint endpoint.Endpoint `json:""`
 }
 
 // New return a new instance of the endpoint that wraps the provided service.
@@ -52,6 +53,14 @@ func New(svc service.PharmacyService, logger log.Logger) (ep Endpoints) {
 		footGunEndpoint = MakeFootGunEndpoint(svc)
 		footGunEndpoint = LoggingMiddleware(log.With(logger, "method", method))(footGunEndpoint)
 		ep.FootGunEndpoint = footGunEndpoint
+	}
+
+	var healthCheckEndpoint endpoint.Endpoint
+	{
+		method := "healthCheck"
+		healthCheckEndpoint = MakeHealthCheckEndpoint(svc)
+		healthCheckEndpoint = LoggingMiddleware(log.With(logger, "method", method))(healthCheckEndpoint)
+		ep.HealthCheckEndpoint = healthCheckEndpoint
 	}
 
 	return ep
@@ -151,4 +160,28 @@ func (e Endpoints) FootGun(ctx context.Context) (err error) {
 	}
 	_ = resp.(FootGunResponse)
 	return nil
+}
+
+// MakeHealthCheckEndpoint returns an endpoint that invokes FootGun on the service.
+// Primarily useful in a server.
+func MakeHealthCheckEndpoint(svc service.PharmacyService) (ep endpoint.Endpoint) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(HealthCheckRequest)
+		if err := req.validate(); err != nil {
+			return HealthCheckResponse{}, err
+		}
+		updated, err := svc.HealthCheck(ctx)
+		return HealthCheckResponse{Updated: updated}, err
+	}
+}
+
+// FootGun implements the service interface, so Endpoints may be used as a service.
+// This is primarily useful in the context of a client library.
+func (e Endpoints) HealthCheck(ctx context.Context) (updated string, err error) {
+	resp, err := e.HealthCheckEndpoint(ctx, HealthCheckRequest{})
+	if err != nil {
+		return
+	}
+	response := resp.(HealthCheckResponse)
+	return response.Updated, nil
 }
