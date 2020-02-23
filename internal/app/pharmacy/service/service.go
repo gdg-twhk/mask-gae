@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
@@ -28,6 +29,8 @@ var (
 	ErrStorageNewClient   = errors.New("storage new client failed")
 	ErrStorageReadObject  = errors.New("storage read object failed")
 )
+
+const newLayout = "15:04"
 
 // Middleware describes a service (as opposed to endpoint) middleware.
 type Middleware func(PharmacyService) PharmacyService
@@ -186,7 +189,24 @@ func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string
 }
 
 func (st *stubPharmacyService) HealthCheck(ctx context.Context) (string, error) {
+	now := time.Now()
+	ns, _ := time.Parse(newLayout, strconv.Itoa(now.Hour())+":"+strconv.Itoa(now.Minute()))
+	srt, _ := time.Parse(newLayout, "23:00")
+	end, _ := time.Parse(newLayout, "07:00")
+	if inTimeSpan(srt, end, ns) {
+		return "ok", nil
+	}
 	return st.repo.Latest(ctx)
+}
+
+func inTimeSpan(start, end, check time.Time) bool {
+	if start.Before(end) {
+		return !check.Before(start) && !check.After(end)
+	}
+	if start.Equal(end) {
+		return check.Equal(start)
+	}
+	return !start.After(check) || !end.Before(check)
 }
 
 type Properties struct {
