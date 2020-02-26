@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-
 	"github.com/go-kit/kit/log"
 
 	"github.com/cage1016/mask/internal/app/feedback/model"
@@ -33,7 +32,7 @@ type FeedbacksvcService interface {
 	// [method=get,expose=true,router=api/feedback/users/:user_id]
 	UserFeedBacks(ctx context.Context, userID string, date string, offset, limit uint64) (res model.FeedbackItemPage, err error)
 	// [method=post,expose=true,router=api/feedback]
-	InsertFeedBack(ctx context.Context, feedback model.Feedback) (id string, err error)
+	InsertFeedBack(ctx context.Context, userID, pharmacyID, optionID, description string, Longitude, Latitude float64) (id string, err error)
 }
 
 // the concrete implementation of service interface
@@ -70,8 +69,15 @@ func (fe *stubFeedbacksvcService) UserFeedBacks(ctx context.Context, userID stri
 }
 
 // Implement the business logic of InsertFeedBack
-func (fe *stubFeedbacksvcService) InsertFeedBack(ctx context.Context, feedback model.Feedback) (id string, err error) {
+func (fe *stubFeedbacksvcService) InsertFeedBack(ctx context.Context, userID, pharmacyID, optionID, description string, Longitude, Latitude float64) (id string, err error) {
 	nid, _ := fe.idpNano.ID()
-	feedback.ID = nid
-	return fe.repo.Insert(ctx, feedback)
+	return fe.repo.Insert(ctx, model.Feedback{
+		ID:          nid,
+		UserID:      userID,
+		PharmacyID:  pharmacyID,
+		OptionID:    optionID,
+		Description: description,
+		Longitude:   Longitude,
+		Latitude:    Latitude,
+	})
 }

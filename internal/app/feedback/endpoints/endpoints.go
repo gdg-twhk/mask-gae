@@ -133,15 +133,29 @@ func MakeFeedBackEndpoint(svc service.FeedbacksvcService) (ep endpoint.Endpoint)
 		if err := req.validate(); err != nil {
 			return FeedBackResponse{}, err
 		}
-		id, err := svc.InsertFeedBack(ctx, req.Feedback)
+		id, err := svc.InsertFeedBack(ctx,
+			req.UserID,
+			req.PharmacyID,
+			req.OptionID,
+			req.Description,
+			req.Longitude,
+			req.Latitude,
+		)
 		return FeedBackResponse{ID: id}, err
 	}
 }
 
 // InsertFeedBack implements the service interface, so Endpoints may be used as a service.
 // This is primarily useful in the context of a client library.
-func (e Endpoints) FeedBack(ctx context.Context, feedback model.Feedback) (id string, err error) {
-	resp, err := e.FeedBackEndpoint(ctx, FeedBackRequest{Feedback: feedback})
+func (e Endpoints) FeedBack(ctx context.Context, userID, pharmacyID, optionID, description string, Longitude, Latitude float64) (id string, err error) {
+	resp, err := e.FeedBackEndpoint(ctx, FeedBackRequest{
+		UserID:      userID,
+		PharmacyID:  pharmacyID,
+		OptionID:    optionID,
+		Description: description,
+		Longitude:   Longitude,
+		Latitude:    Latitude,
+	})
 	if err != nil {
 		return
 	}

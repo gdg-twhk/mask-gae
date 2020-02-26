@@ -31,7 +31,7 @@ var (
 // OptionsResponse collects the response values for the Options method.
 type OptionsResponse struct {
 	Items []model.Option `json:"items"`
-	Err   error          `json:"err,omitempty"`
+	Err   error          `json:"-"`
 }
 
 func (r OptionsResponse) StatusCode() int {
@@ -49,7 +49,7 @@ func (r OptionsResponse) Response() interface{} {
 // PharmacyFeedBacksResponse collects the response values for the PharmacyFeedBacks method.
 type PharmacyFeedBacksResponse struct {
 	Res model.FeedbackItemPage `json:"items"`
-	Err error                  `json:"err,omitempty"`
+	Err error                  `json:"-"`
 }
 
 func (r PharmacyFeedBacksResponse) StatusCode() int {
@@ -67,7 +67,7 @@ func (r PharmacyFeedBacksResponse) Response() interface{} {
 // UserFeedBacksResponse collects the response values for the UserFeedBacks method.
 type UserFeedBacksResponse struct {
 	Res model.FeedbackItemPage `json:"res"`
-	Err error                  `json:"err,omitempty"`
+	Err error                  `json:"-"`
 }
 
 func (r UserFeedBacksResponse) StatusCode() int {
@@ -84,7 +84,7 @@ func (r UserFeedBacksResponse) Response() interface{} {
 
 // FeedBackResponse collects the response values for the InsertFeedBack method.
 type FeedBackResponse struct {
-	Err error  `json:"err,omitempty"`
+	Err error  `json:"-"`
 	ID  string `json:"id"`
 }
 

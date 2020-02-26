@@ -44,7 +44,7 @@ func env(key string, fallback string) string {
 }
 
 // @title Mask API
-// @version v1
+// @version 0.2.0
 // @description This is a Mask server celler server.
 // @termsOfService http://swagger.io/terms/
 

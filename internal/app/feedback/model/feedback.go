@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"time"
+
+	"github.com/cage1016/mask/internal/pkg/util"
 )
 
 type Option struct {
@@ -29,7 +31,7 @@ func (p *Feedback) MarshalJSON() ([]byte, error) {
 		CreatedAt string `json:"createdAt"`
 	}{
 		Alias:     (*Alias)(p),
-		CreatedAt: p.CreatedAt.Format("2006-01-02T15:04:05-0700"),
+		CreatedAt: p.CreatedAt.In(util.Location).Format("2006-01-02T15:04:05-0700"),
 	})
 }
 

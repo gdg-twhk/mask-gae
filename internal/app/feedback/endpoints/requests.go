@@ -3,7 +3,6 @@ package endpoints
 import (
 	"time"
 
-	"github.com/cage1016/mask/internal/app/feedback/model"
 	"github.com/cage1016/mask/internal/app/feedback/service"
 	"github.com/cage1016/mask/internal/pkg/errors"
 )
@@ -44,8 +43,8 @@ func (r PharmacyFeedBacksRequest) validate() error {
 		return errors.Wrap(service.ErrMalformedEntity, err)
 	}
 
-	if r.Limit == 0 || r.Limit > maxLimitSize {
-		return service.ErrMalformedEntity
+	if r.Limit <= 0 || r.Limit > maxLimitSize {
+		return errors.Wrap(service.ErrMalformedEntity, errors.New("limit must between 1 - 100"))
 	}
 
 	return nil
@@ -69,8 +68,8 @@ func (r UserFeedBacksRequest) validate() error {
 		return errors.Wrap(service.ErrMalformedEntity, err)
 	}
 
-	if r.Limit == 0 || r.Limit > maxLimitSize {
-		return service.ErrMalformedEntity
+	if r.Limit <= 0 || r.Limit > maxLimitSize {
+		return errors.Wrap(service.ErrMalformedEntity, errors.New("limit must between 1 - 100"))
 	}
 
 	return nil
@@ -78,16 +77,22 @@ func (r UserFeedBacksRequest) validate() error {
 
 // FeedBackRequest collects the request parameters for the InsertFeedBack method.
 type FeedBackRequest struct {
-	Feedback model.Feedback `json:"feedback"`
+	ID          string  `json:"id"`
+	UserID      string  `json:"userId"`
+	PharmacyID  string  `json:"pharmacyId"`
+	OptionID    string  `json:"optionId"`
+	Description string  `json:"description"`
+	Longitude   float64 `json:"longitude"`
+	Latitude    float64 `json:"latitude"`
 }
 
 func (r FeedBackRequest) validate() error {
-	if r.Feedback.UserID == "" || r.Feedback.PharmacyID == "" || r.Feedback.OptionID == "" {
-		return service.ErrMalformedEntity
+	if r.UserID == "" || r.PharmacyID == "" || r.OptionID == "" {
+		return errors.Wrap(service.ErrMalformedEntity, errors.New("userId or pharmacyId or optionId is empty"))
 	}
 
-	if r.Feedback.OptionID == customOptionID && r.Feedback.Description == "" {
-		return service.ErrMalformedEntity
+	if r.OptionID == customOptionID && r.Description == "" {
+		return errors.Wrap(service.ErrMalformedEntity, errors.New("description must have value when option is customize"))
 	}
 
 	return nil // TBA

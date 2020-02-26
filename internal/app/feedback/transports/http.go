@@ -3,6 +3,7 @@ package transports
 import (
 	"context"
 	"encoding/json"
+	"github.com/rs/cors"
 	"strconv"
 	"time"
 
@@ -26,6 +27,94 @@ const (
 	defLimit  = 10
 )
 
+// ShowFeedback godoc
+// @Summary feedback options
+// @Description The endpoint for Retailbase to fetch feedback options
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Success 200 {object} endpoints.OptionsResponse
+// @Failure 400 {object} responses.ErrorRes
+// @Failure 500 {object} responses.ErrorRes
+// @Router /api/feedback/options [get]
+func OptionsHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Get("/api/feedback/options", httptransport.NewServer(
+		endpoints.OptionsEndpoint,
+		decodeHTTPOptionsRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+
+// ShowFeedback godoc
+// @Summary specific pharmacy feedbacks
+// @Description The endpoint for Retailbase to fetch specific pharmacy feedbacks
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param   offset     query    int     true        "Offset"
+// @Param   limit      query    int     true        "limit"
+// @Param   date      query    string     true       "date, yyyy_mmdd"
+// @Param pharmacy_id path string true "Pharmacy ID"
+// @Success 200 {object} model.FeedbackItemPage
+// @Failure 400 {object} responses.ErrorRes
+// @Failure 500 {object} responses.ErrorRes
+// @Router /api/feedback/pharmacies/{pharmacy_id} [get]
+func PharmacyFeedBacksHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Get("/api/feedback/pharmacies/:pharmacy_id", httptransport.NewServer(
+		endpoints.PharmacyFeedBacksEndpoint,
+		decodeHTTPPharmacyFeedBacksRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+
+// ShowFeedback godoc
+// @Summary specific user feedbacks
+// @Description The endpoint for Retailbase to fetch specific user feedbacks
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Param   offset     query    int     true        "Offset"
+// @Param   limit      query    int     true        "limit"
+// @Param   date      query    string     true       "date, yyyy_mmdd"
+// @Success 200 {object} model.FeedbackItemPage
+// @Failure 400 {object} responses.ErrorRes
+// @Failure 500 {object} responses.ErrorRes
+// @Router /api/feedback/users/{user_id} [get]
+func UserFeedBacksHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Get("/api/feedback/users/:user_id", httptransport.NewServer(
+		endpoints.UserFeedBacksEndpoint,
+		decodeHTTPUserFeedBacksRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+
+// ShowFeedback godoc
+// @Summary specific pharmacy feedbacks
+// @Description The endpoint for Retailbase to fetch specific pharmacy feedbacks
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param user body endpoints.FeedBackRequest true "Feedback"
+// @Success 200 {object} endpoints.FeedBackResponse
+// @Failure 400 {object} responses.ErrorRes
+// @Failure 500 {object} responses.ErrorRes
+// @Router /api/feedback [post]
+func FeedBackHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/feedback", httptransport.NewServer(
+		endpoints.FeedBackEndpoint,
+		decodeHTTPFeedBackRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+}
+
 // NewHTTPHandler returns a handler that makes a set of endpoints available on
 // predefined paths.
 func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handler { // Zipkin HTTP Server Trace can either be instantiated per endpoint with a
@@ -35,31 +124,11 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 	}
 
 	m := bone.New()
-	m.Get("/api/feedback/options", httptransport.NewServer(
-		endpoints.OptionsEndpoint,
-		decodeHTTPOptionsRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Get("/api/feedback/pharmacies/:pharmacy_id", httptransport.NewServer(
-		endpoints.PharmacyFeedBacksEndpoint,
-		decodeHTTPPharmacyFeedBacksRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Get("/api/feedback/users/:user_id", httptransport.NewServer(
-		endpoints.UserFeedBacksEndpoint,
-		decodeHTTPUserFeedBacksRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Post("/api/feedback", httptransport.NewServer(
-		endpoints.FeedBackEndpoint,
-		decodeHTTPFeedBackRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	return m
+	OptionsHandler(m, endpoints, options, logger)
+	PharmacyFeedBacksHandler(m, endpoints, options, logger)
+	UserFeedBacksHandler(m, endpoints, options, logger)
+	FeedBackHandler(m, endpoints, options, logger)
+	return cors.AllowAll().Handler(m)
 }
 
 // decodeHTTPOptionsRequest is a transport/http.DecodeRequestFunc that decodes a
@@ -125,7 +194,7 @@ func decodeHTTPUserFeedBacksRequest(_ context.Context, r *http.Request) (interfa
 // JSON-encoded request from the HTTP request body. Primarily useful in a server.
 func decodeHTTPFeedBackRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.FeedBackRequest
-	err := json.NewDecoder(r.Body).Decode(&req.Feedback)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
 }
 

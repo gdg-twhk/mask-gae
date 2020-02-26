@@ -46,10 +46,10 @@ func (lm loggingMiddleware) UserFeedBacks(ctx context.Context, userID string, da
 	return lm.next.UserFeedBacks(ctx, userID, date, offset, limit)
 }
 
-func (lm loggingMiddleware) InsertFeedBack(ctx context.Context, feedback model.Feedback) (id string, err error) {
+func (lm loggingMiddleware) InsertFeedBack(ctx context.Context, userID, pharmacyID, optionID, description string, Longitude, Latitude float64) (id string, err error) {
 	defer func() {
-		lm.logger.Log("method", "InsertFeedBack", "feedback", feedback, "err", err)
+		lm.logger.Log("method", "InsertFeedBack", "userID", userID, "pharmacyID", pharmacyID, "optionID", optionID, "description", description, "Longitude", Longitude, "Latitude", Latitude, "err", err)
 	}()
 
-	return lm.next.InsertFeedBack(ctx, feedback)
+	return lm.next.InsertFeedBack(ctx, userID, pharmacyID, optionID, description, Longitude, Latitude)
 }
