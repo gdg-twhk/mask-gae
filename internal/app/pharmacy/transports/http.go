@@ -22,6 +22,73 @@ const (
 	contentType string = "application/json"
 )
 
+// ShowPharmacy godoc
+// @Summary
+// @Description The endpoint for Mask to fetch pharmacies
+// @Tags pharmacy
+// @Accept json
+// @Produce json
+// @Param query body endpoints.QueryRequest true "Fetch Pharmacies"
+// @Success 200 {object} endpoints.QueryResponse
+// @Failure 400 {object} responses.ErrorRes
+// @Failure 500 {object} responses.ErrorRes
+// @Router /api/pharmacies [post]
+func QueryHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/pharmacies", httptransport.NewServer(
+		endpoints.QueryEndpoint,
+		decodeHTTPQueryRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+func SyncHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/pharmacies/sync", httptransport.NewServer(
+		endpoints.SyncEndpoint,
+		decodeHTTPSyncRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+func SyncHandlerHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/pharmacies/sync_handler", httptransport.NewServer(
+		endpoints.SyncHandlerEndpoint,
+		decodeHTTPSyncHandlerRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+func FootGunHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/pharmacies/footgun", httptransport.NewServer(
+		endpoints.FootGunEndpoint,
+		decodeHTTPFootGunRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+
+// ShowPharmacy godoc
+// @Summary
+// @Description The endpoint for Mask health check
+// @Description 07-23 will return the lastest pharmacy update time, other wise will return ok
+// @Tags pharmacy
+// @Accept json
+// @Produce json
+// @Success 200 {object} endpoints.HealthCheckResponse
+// @Failure 500 {object} responses.ErrorRes
+// @Router /api/pharmacies/health_check [get]
+func HealthCheckHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Get("/api/pharmacies/health_check", httptransport.NewServer(
+		endpoints.HealthCheckEndpoint,
+		decodeHTTPHealthCheckRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+}
+
 // NewHTTPHandler returns a handler that makes a set of endpoints available on
 // predefined paths.
 func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handler { // Zipkin HTTP Server Trace can either be instantiated per endpoint with a
@@ -31,36 +98,11 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 	}
 
 	m := bone.New()
-	m.Post("/api/pharmacies", httptransport.NewServer(
-		endpoints.QueryEndpoint,
-		decodeHTTPQueryRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Post("/api/pharmacies/sync", httptransport.NewServer(
-		endpoints.SyncEndpoint,
-		decodeHTTPSyncRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Post("/api/pharmacies/sync_handler", httptransport.NewServer(
-		endpoints.SyncHandlerEndpoint,
-		decodeHTTPSyncHandlerRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Post("/api/pharmacies/footgun", httptransport.NewServer(
-		endpoints.FootGunEndpoint,
-		decodeHTTPFootGunRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
-	m.Get("/api/pharmacies/health_check", httptransport.NewServer(
-		endpoints.HealthCheckEndpoint,
-		decodeHTTPHealthCheckRequest,
-		encodeJSONResponse,
-		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
-	))
+	QueryHandler(m, endpoints, options, logger)
+	SyncHandler(m, endpoints, options, logger)
+	SyncHandlerHandler(m, endpoints, options, logger)
+	FootGunHandler(m, endpoints, options, logger)
+	HealthCheckHandler(m, endpoints, options, logger)
 	return cors.AllowAll().Handler(m)
 }
 
