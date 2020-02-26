@@ -6,11 +6,11 @@ import (
 )
 
 type Errors struct {
-	Domain       string `json:"domain,omitempty"`
+	Domain       string `json:"-"`
 	Message      string `json:"message"`
-	Reason       string `json:"reason,omitempty"`
-	Location     string `json:"location,omitempty"`
-	LocationType string `json:"locationType,omitempty"`
+	Reason       string `json:"-"`
+	Location     string `json:"-"`
+	LocationType string `json:"-"`
 }
 
 func FromError(err string) []Errors {

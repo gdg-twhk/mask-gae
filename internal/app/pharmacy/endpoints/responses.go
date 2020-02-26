@@ -27,7 +27,7 @@ var (
 // QueryResponse collects the response values for the Query method.
 type QueryResponse struct {
 	Items []model.Pharmacy `json:"items"`
-	Err   error            `json:"err,omitempty"`
+	Err   error            `json:"-"`
 }
 
 func (r QueryResponse) StatusCode() int {
@@ -48,7 +48,7 @@ func (r QueryResponse) ResponseOld() interface{} {
 
 // SyncResponse collects the response values for the Sync method.
 type SyncResponse struct {
-	Err error `json:"err,omitempty"`
+	Err error `json:"-"`
 }
 
 func (r SyncResponse) StatusCode() int {
@@ -65,7 +65,7 @@ func (r SyncResponse) Response() interface{} {
 
 // SyncHandlerResponse collects the response values for the SyncHandler method.
 type SyncHandlerResponse struct {
-	Err error `json:"err,omitempty"`
+	Err error `json:"-"`
 }
 
 func (r SyncHandlerResponse) StatusCode() int {
@@ -82,7 +82,7 @@ func (r SyncHandlerResponse) Response() interface{} {
 
 // FootGunResponse collects the response values for the FootGun method.
 type FootGunResponse struct {
-	Err error `json:"err,omitempty"`
+	Err error `json:"-"`
 }
 
 func (r FootGunResponse) StatusCode() int {
@@ -100,7 +100,7 @@ func (r FootGunResponse) Response() interface{} {
 // HealthCheckResponse collects the response values for the FootGun method.
 type HealthCheckResponse struct {
 	Updated string `json:"updated"`
-	Err     error  `json:"err,omitempty"`
+	Err     error  `json:"-"`
 }
 
 func (r HealthCheckResponse) StatusCode() int {

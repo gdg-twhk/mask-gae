@@ -1,0 +1,176 @@
+basePath: /
+definitions:
+  endpoints.Bounds:
+    properties:
+      ne:
+        $ref: '#/definitions/endpoints.LatLng'
+        type: object
+      nw:
+        $ref: '#/definitions/endpoints.LatLng'
+        type: object
+      se:
+        $ref: '#/definitions/endpoints.LatLng'
+        type: object
+      sw:
+        $ref: '#/definitions/endpoints.LatLng'
+        type: object
+    type: object
+  endpoints.HealthCheckResponse:
+    properties:
+      updated:
+        type: string
+    type: object
+  endpoints.LatLng:
+    properties:
+      lat:
+        type: number
+      lng:
+        type: number
+    type: object
+  endpoints.QueryRequest:
+    properties:
+      bounds:
+        $ref: '#/definitions/endpoints.Bounds'
+        type: object
+      center:
+        $ref: '#/definitions/endpoints.LatLng'
+        type: object
+      max:
+        type: integer
+    type: object
+  endpoints.QueryResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.Pharmacy'
+        type: array
+    type: object
+  errors.Errors:
+    properties:
+      message:
+        type: string
+    type: object
+  model.Pharmacy:
+    properties:
+      address:
+        type: string
+      available:
+        type: string
+      county:
+        type: string
+      cunli:
+        type: string
+      customNote:
+        type: string
+      distance:
+        type: number
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      maskAdult:
+        type: integer
+      maskChild:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      phone:
+        type: string
+      serviceNote:
+        type: string
+      servicePeriods:
+        type: string
+      town:
+        type: string
+      updated:
+        type: string
+      website:
+        type: string
+    type: object
+  responses.ErrorRes:
+    properties:
+      error:
+        $ref: '#/definitions/responses.ErrorResItem'
+        type: object
+    type: object
+  responses.ErrorResItem:
+    properties:
+      code:
+        type: integer
+      errors:
+        items:
+          $ref: '#/definitions/errors.Errors'
+        type: array
+      message:
+        type: string
+    type: object
+host: mask.goodideas-studio.com
+info:
+  contact:
+    email: cage.chung@gmail.com
+    name: API Support
+    url: https://github.com/tnstiger/mask-gdg/issues
+  description: This is a Mask server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Mask API
+  version: v1
+paths:
+  /api/pharmacies:
+    post:
+      consumes:
+      - application/json
+      description: The endpoint for Mask to fetch pharmacies
+      parameters:
+      - description: Fetch Pharmacies
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/endpoints.QueryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/endpoints.QueryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+      tags:
+      - pharmacy
+  /api/pharmacies/health_check:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        The endpoint for Mask health check
+        07-23 will return the lastest pharmacy update time, other wise will return ok
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/endpoints.HealthCheckResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+      tags:
+      - pharmacy
+schemes:
+- https
+swagger: "2.0"

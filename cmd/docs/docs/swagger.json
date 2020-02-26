@@ -1,0 +1,263 @@
+{
+    "schemes": [
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a Mask server celler server.",
+        "title": "Mask API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "https://github.com/tnstiger/mask-gdg/issues",
+            "email": "cage.chung@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "v1"
+    },
+    "host": "mask.goodideas-studio.com",
+    "basePath": "/",
+    "paths": {
+        "/api/pharmacies": {
+            "post": {
+                "description": "The endpoint for Mask to fetch pharmacies",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pharmacy"
+                ],
+                "parameters": [
+                    {
+                        "description": "Fetch Pharmacies",
+                        "name": "query",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/endpoints.QueryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/endpoints.QueryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrorRes"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrorRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/pharmacies/health_check": {
+            "get": {
+                "description": "The endpoint for Mask health check\n07-23 will return the lastest pharmacy update time, other wise will return ok",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pharmacy"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/endpoints.HealthCheckResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrorRes"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "endpoints.Bounds": {
+            "type": "object",
+            "properties": {
+                "ne": {
+                    "type": "object",
+                    "$ref": "#/definitions/endpoints.LatLng"
+                },
+                "nw": {
+                    "type": "object",
+                    "$ref": "#/definitions/endpoints.LatLng"
+                },
+                "se": {
+                    "type": "object",
+                    "$ref": "#/definitions/endpoints.LatLng"
+                },
+                "sw": {
+                    "type": "object",
+                    "$ref": "#/definitions/endpoints.LatLng"
+                }
+            }
+        },
+        "endpoints.HealthCheckResponse": {
+            "type": "object",
+            "properties": {
+                "updated": {
+                    "type": "string"
+                }
+            }
+        },
+        "endpoints.LatLng": {
+            "type": "object",
+            "properties": {
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                }
+            }
+        },
+        "endpoints.QueryRequest": {
+            "type": "object",
+            "properties": {
+                "bounds": {
+                    "type": "object",
+                    "$ref": "#/definitions/endpoints.Bounds"
+                },
+                "center": {
+                    "type": "object",
+                    "$ref": "#/definitions/endpoints.LatLng"
+                },
+                "max": {
+                    "type": "integer"
+                }
+            }
+        },
+        "endpoints.QueryResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Pharmacy"
+                    }
+                }
+            }
+        },
+        "errors.Errors": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Pharmacy": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "available": {
+                    "type": "string"
+                },
+                "county": {
+                    "type": "string"
+                },
+                "cunli": {
+                    "type": "string"
+                },
+                "customNote": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "maskAdult": {
+                    "type": "integer"
+                },
+                "maskChild": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "serviceNote": {
+                    "type": "string"
+                },
+                "servicePeriods": {
+                    "type": "string"
+                },
+                "town": {
+                    "type": "string"
+                },
+                "updated": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.ErrorRes": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "object",
+                    "$ref": "#/definitions/responses.ErrorResItem"
+                }
+            }
+        },
+        "responses.ErrorResItem": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/errors.Errors"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

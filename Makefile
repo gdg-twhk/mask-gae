@@ -12,10 +12,21 @@ else
 	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/pharmacy/app.yaml
 endif
 
+## deploy_docs [v=version-name]: deploy docs service
+deploy_docs:
+ifdef v
+	gcloud app deploy --version ${v} --project ${PROJECT} -q cmd/docs/app.yaml
+else
+	gcloud app deploy --version ${VERSION} --project ${PROJECT} -q cmd/docs/app.yaml
+endif
+
 ## deploy_dispatch: deploy disptach
 deploy_dispatch:
 	gcloud app deploy --project ${PROJECT} -q dispatch.yaml
 
+## build_swagger: generate swagger docs
+build_swagger:
+	swag init --dir .  --generalInfo ./cmd/docs/main.go --output ./cmd/docs/docs
 
 .PHONY: all help
 
