@@ -15,6 +15,28 @@ definitions:
         $ref: '#/definitions/endpoints.LatLng'
         type: object
     type: object
+  endpoints.FeedBackRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      optionId:
+        type: string
+      pharmacyId:
+        type: string
+      userId:
+        type: string
+    type: object
+  endpoints.FeedBackResponse:
+    properties:
+      id:
+        type: string
+    type: object
   endpoints.HealthCheckResponse:
     properties:
       updated:
@@ -26,6 +48,13 @@ definitions:
         type: number
       lng:
         type: number
+    type: object
+  endpoints.OptionsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.Option'
+        type: array
     type: object
   endpoints.QueryRequest:
     properties:
@@ -48,6 +77,45 @@ definitions:
   errors.Errors:
     properties:
       message:
+        type: string
+    type: object
+  model.Feedback:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      optionId:
+        type: string
+      pharmacyId:
+        type: string
+      userId:
+        type: string
+    type: object
+  model.FeedbackItemPage:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.Feedback'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.Option:
+    properties:
+      id:
+        type: string
+      name:
         type: string
     type: object
   model.Pharmacy:
@@ -120,8 +188,149 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Mask API
-  version: v1
+  version: 0.2.0
 paths:
+  /api/feedback:
+    post:
+      consumes:
+      - application/json
+      description: The endpoint for Retailbase to fetch specific pharmacy feedbacks
+      parameters:
+      - description: Feedback
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/endpoints.FeedBackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/endpoints.FeedBackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+      summary: specific pharmacy feedbacks
+      tags:
+      - feedback
+  /api/feedback/options:
+    get:
+      consumes:
+      - application/json
+      description: The endpoint for Retailbase to fetch feedback options
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/endpoints.OptionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+      summary: feedback options
+      tags:
+      - feedback
+  /api/feedback/pharmacies/{pharmacy_id}:
+    get:
+      consumes:
+      - application/json
+      description: The endpoint for Retailbase to fetch specific pharmacy feedbacks
+      parameters:
+      - description: Offset
+        in: query
+        name: offset
+        required: true
+        type: integer
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: date, yyyy_mmdd
+        in: query
+        name: date
+        required: true
+        type: string
+      - description: Pharmacy ID
+        in: path
+        name: pharmacy_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.FeedbackItemPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+      summary: specific pharmacy feedbacks
+      tags:
+      - feedback
+  /api/feedback/users/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: The endpoint for Retailbase to fetch specific user feedbacks
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Offset
+        in: query
+        name: offset
+        required: true
+        type: integer
+      - description: limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: date, yyyy_mmdd
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.FeedbackItemPage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ErrorRes'
+      summary: specific user feedbacks
+      tags:
+      - feedback
   /api/pharmacies:
     post:
       consumes:

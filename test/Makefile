@@ -13,3 +13,13 @@ cmdpharmacy:
 	MASK_PHARMACY_DB_PASS=password \
 	MASK_PHARMACY_DB=mask \
 	go run ../cmd/pharmacy/main.go
+
+
+cmdfeedback:
+	MASK_FEEDBACK_DB_HOST=localhost \
+	MASK_FEEDBACK_DB_PORT=5433 \
+	MASK_FEEDBACK_DB_USER=postgres \
+	MASK_FEEDBACK_DB_PASS=password \
+	MASK_FEEDBACK_DB=mask \
+	go run ../cmd/feedback/main.go
+	go run ../cmd/feedback/main.go

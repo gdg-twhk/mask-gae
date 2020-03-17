@@ -1,0 +1,21 @@
+### get options
+
+GET http://localhost:8080/api/feedback/options  HTTP/1.1
+Content-Type: application/json
+
+### post new feedback
+
+POST http://localhost:8080/api/feedback
+Content-Type: application/json
+
+< ./feedback.json
+
+
+### query user feedbacks by data
+GET http://localhost:8080/api/feedback/users/DT6zkUaztUSFjjIe8IhCO2cDoyL2?date=2020_0220&offset=0&limit=2
+Content-Type: application/json
+
+
+### query pharmacy feedback by data
+GET http://localhost:8080/api/feedback/pharmacies/5901024883?date=2020_0220&offset=0&limit=2
+Content-Type: application/json
