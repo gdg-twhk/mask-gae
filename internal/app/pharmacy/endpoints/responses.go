@@ -15,13 +15,9 @@ var (
 
 	_ httptransport.StatusCoder = (*QueryResponse)(nil)
 
-	_ httptransport.Headerer = (*SyncResponse)(nil)
+	_ httptransport.Headerer = (*TickerUpdateResponse)(nil)
 
-	_ httptransport.StatusCoder = (*SyncResponse)(nil)
-
-	_ httptransport.Headerer = (*SyncHandlerResponse)(nil)
-
-	_ httptransport.StatusCoder = (*SyncHandlerResponse)(nil)
+	_ httptransport.StatusCoder = (*TickerUpdateResponse)(nil)
 )
 
 // QueryResponse collects the response values for the Query method.
@@ -46,71 +42,19 @@ func (r QueryResponse) ResponseOld() interface{} {
 	return r.Items
 }
 
-// SyncResponse collects the response values for the Sync method.
-type SyncResponse struct {
-	Err error `json:"-"`
+// TickerUpdateResponse collects the response values for the TickerUpdate method.
+type TickerUpdateResponse struct {
+	Err error `json:"err"`
 }
 
-func (r SyncResponse) StatusCode() int {
-	return http.StatusOK
-}
-
-func (r SyncResponse) Headers() http.Header {
-	return http.Header{}
-}
-
-func (r SyncResponse) Response() interface{} {
-	return responses.DataRes{APIVersion: service.Version}
-}
-
-// SyncHandlerResponse collects the response values for the SyncHandler method.
-type SyncHandlerResponse struct {
-	Err error `json:"-"`
-}
-
-func (r SyncHandlerResponse) StatusCode() int {
-	return http.StatusNoContent // TBA
-}
-
-func (r SyncHandlerResponse) Headers() http.Header {
-	return http.Header{}
-}
-
-func (r SyncHandlerResponse) Response() interface{} {
-	return responses.DataRes{APIVersion: service.Version}
-}
-
-// FootGunResponse collects the response values for the FootGun method.
-type FootGunResponse struct {
-	Err error `json:"-"`
-}
-
-func (r FootGunResponse) StatusCode() int {
+func (r TickerUpdateResponse) StatusCode() int {
 	return http.StatusOK // TBA
 }
 
-func (r FootGunResponse) Headers() http.Header {
+func (r TickerUpdateResponse) Headers() http.Header {
 	return http.Header{}
 }
 
-func (r FootGunResponse) Response() interface{} {
+func (r TickerUpdateResponse) Response() interface{} {
 	return responses.DataRes{APIVersion: service.Version}
-}
-
-// HealthCheckResponse collects the response values for the FootGun method.
-type HealthCheckResponse struct {
-	Updated string `json:"updated"`
-	Err     error  `json:"-"`
-}
-
-func (r HealthCheckResponse) StatusCode() int {
-	return http.StatusOK // TBA
-}
-
-func (r HealthCheckResponse) Headers() http.Header {
-	return http.Header{}
-}
-
-func (r HealthCheckResponse) Response() interface{} {
-	return responses.DataRes{APIVersion: service.Version, Data: r.Updated}
 }

@@ -27,36 +27,10 @@ func (r QueryRequest) validate() error {
 	return nil // TBA
 }
 
-// SyncRequest collects the request parameters for the Sync method.
-type SyncRequest struct {
+// TickerUpdateRequest collects the request parameters for the TickerUpdate method.
+type TickerUpdateRequest struct {
 }
 
-func (r SyncRequest) validate() error {
-	return nil // TBA
-}
-
-// SyncHandlerRequest collects the request parameters for the SyncHandler method.
-type SyncHandlerRequest struct {
-	QueueName string `json:"queue_name"`
-	TaskName  string `json:"task_name"`
-}
-
-func (r SyncHandlerRequest) validate() error {
-	return nil // TBA
-}
-
-// FootGunRequest collects the request parameters for the FootGun method.
-type FootGunRequest struct {
-}
-
-func (r FootGunRequest) validate() error {
-	return nil // TBA
-}
-
-// HealthCheckRequest collects the request parameters for the FootGun method.
-type HealthCheckRequest struct {
-}
-
-func (r HealthCheckRequest) validate() error {
+func (r TickerUpdateRequest) validate() error {
 	return nil // TBA
 }
