@@ -71,7 +71,7 @@ func main() {
 	var logger log.Logger
 	{
 		logger = log.NewJSONLogger(os.Stderr)
-		logger = level.NewFilter(logger, level.AllowInfo())
+		logger = level.NewFilter(logger, level.AllowWarn())
 		logger = log.With(logger, "timestamp", log.DefaultTimestampUTC)
 		logger = log.With(logger, "caller", log.DefaultCaller)
 	}
