@@ -21,56 +21,41 @@ import (
 )
 
 const (
-	defServiceName      = "pharmacy"
-	defLogLevel         = "error"
-	defServiceHost      = "localhost"
-	defHTTPPort         = "8080"
-	defDBHost           = ""
-	defDBPort           = ""
-	defDBUser           = ""
-	defDBPass           = ""
-	defDBName           = ""
-	defDBSSLMode        = "disable"
-	defDBSSLCert        = ""
-	defDBSSLKey         = ""
-	defDBSSLRootCert    = ""
-	defProjectID        = ""
-	defLocationID       = ""
-	defQueueID          = ""
-	defBucketID         = ""
-	defPointsObjectName = ""
+	defServiceName   = "pharmacy"
+	defLogLevel      = "error"
+	defServiceHost   = "localhost"
+	defHTTPPort      = "8080"
+	defDBHost        = ""
+	defDBPort        = ""
+	defDBUser        = ""
+	defDBPass        = ""
+	defDBName        = ""
+	defDBSSLMode     = "disable"
+	defDBSSLCert     = ""
+	defDBSSLKey      = ""
+	defDBSSLRootCert = ""
 
-	envServiceName      = "MASK_PHARMACY_SERVICE_NAME"
-	envLogLevel         = "MASK_PHARMACY_LOG_LEVEL"
-	envServiceHost      = "MASK_PHARMACY_SERVICE_HOST"
-	envHTTPPort         = "PORT"
-	envDBHost           = "MASK_PHARMACY_DB_HOST"
-	envDBPort           = "MASK_PHARMACY_DB_PORT"
-	envDBUser           = "MASK_PHARMACY_DB_USER"
-	envDBPass           = "MASK_PHARMACY_DB_PASS"
-	envDBName           = "MASK_PHARMACY_DB"
-	envDBSSLMode        = "MASK_PHARMACY_DB_SSL_MODE"
-	envDBSSLCert        = "MASK_PHARMACY_DB_SSL_CERT"
-	envDBSSLKey         = "MASK_PHARMACY_DB_SSL_KEY"
-	envDBSSLRootCert    = "MASK_PHARMACY_DB_SSL_ROOT_CERT"
-	envProjectID        = "MASK_PHARMACY_PROJECT_ID"
-	envLocationID       = "MASK_PHARMACY_LOCATION_ID"
-	envQueueID          = "MASK_PHARMACY_QUEUE_ID"
-	envBucketID         = "MASK_PHARMACY_BUCKET_ID"
-	envPointsObjectName = "MASK_PHARMACY_POINTS_OBJECT_NAME"
+	envServiceName   = "SERVICE_NAME"
+	envLogLevel      = "LOG_LEVEL"
+	envServiceHost   = "SERVICE_HOST"
+	envHTTPPort      = "PORT"
+	envDBHost        = "DB_HOST"
+	envDBPort        = "DB_PORT"
+	envDBUser        = "DB_USER"
+	envDBPass        = "DB_PASS"
+	envDBName        = "DB"
+	envDBSSLMode     = "DB_SSL_MODE"
+	envDBSSLCert     = "DB_SSL_CERT"
+	envDBSSLKey      = "DB_SSL_KEY"
+	envDBSSLRootCert = "DB_SSL_ROOT_CERT"
 )
 
 type config struct {
-	serviceName      string
-	logLevel         string
-	serviceHost      string
-	httpPort         string
-	dbConfig         psql.Config
-	ProjectID        string
-	LocationID       string
-	QueueID          string
-	BucketID         string
-	PointsObjectName string
+	serviceName string
+	logLevel    string
+	serviceHost string
+	httpPort    string
+	dbConfig    psql.Config
 }
 
 // Env reads specified environment variable. If no value has been found,
@@ -100,12 +85,13 @@ func main() {
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
-	service := NewServer(db, cfg.ProjectID, cfg.LocationID, cfg.QueueID, cfg.BucketID, cfg.PointsObjectName, logger)
-	endpoints := endpoints.New(service, logger)
+	svc := NewServer(db, logger)
+	eps := endpoints.New(svc, logger)
 
 	wg := &sync.WaitGroup{}
 
-	go startHTTPServer(ctx, wg, endpoints, cfg.httpPort, logger)
+	go startHTTPServer(ctx, wg, eps, cfg.httpPort, logger)
+	go tickerFunc(ctx, wg, svc, logger)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -117,7 +103,7 @@ func main() {
 	fmt.Println("main: all goroutines have told us they've finished")
 }
 
-func loadConfig(logger log.Logger) (cfg config) {
+func loadConfig(_ log.Logger) (cfg config) {
 	dbConfig := psql.Config{
 		Host:        env(envDBHost, defDBHost),
 		Port:        env(envDBPort, defDBPort),
@@ -135,11 +121,6 @@ func loadConfig(logger log.Logger) (cfg config) {
 	cfg.logLevel = env(envLogLevel, defLogLevel)
 	cfg.serviceHost = env(envServiceHost, defServiceHost)
 	cfg.httpPort = env(envHTTPPort, defHTTPPort)
-	cfg.ProjectID = env(envProjectID, defProjectID)
-	cfg.LocationID = env(envLocationID, defLocationID)
-	cfg.QueueID = env(envQueueID, defQueueID)
-	cfg.BucketID = env(envBucketID, defBucketID)
-	cfg.PointsObjectName = env(envPointsObjectName, defPointsObjectName)
 	return cfg
 }
 
@@ -163,10 +144,9 @@ func connectToDB(cfg psql.Config, logger log.Logger) *sqlx.DB {
 	return db
 }
 
-func NewServer(db *sqlx.DB, projectID, LocationID, QueueID, BucketID, PointsObjectName string, logger log.Logger) service.PharmacyService {
+func NewServer(db *sqlx.DB, logger log.Logger) service.PharmacyService {
 	repo := postgres.New(db, logger)
-	service := service.New(repo, projectID, LocationID, QueueID, BucketID, PointsObjectName, logger)
-	return service
+	return service.New(repo, logger)
 }
 
 func startHTTPServer(ctx context.Context, wg *sync.WaitGroup, endpoints endpoints.Endpoints, port string, logger log.Logger) {
@@ -199,4 +179,23 @@ func startHTTPServer(ctx context.Context, wg *sync.WaitGroup, endpoints endpoint
 	srv.Shutdown(shutdownCtx)
 
 	level.Info(logger).Log("protocol", "HTTP", "Shutdown", "http server gracefully stopped")
+}
+
+func tickerFunc(ctx context.Context, wg *sync.WaitGroup, svc service.PharmacyService, logger log.Logger) {
+	wg.Add(1)
+	// tell the caller we've stopped
+	defer wg.Done()
+
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			svc.TickerUpdate(ctx)
+		case <-ctx.Done():
+			logger.Log("method", "ctx.Done")
+			return
+		}
+	}
 }

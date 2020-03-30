@@ -2,32 +2,16 @@ package service
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"time"
-
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
-	"cloud.google.com/go/storage"
-	"github.com/go-kit/kit/log"
-	"github.com/lib/pq"
-	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
-
 	"github.com/cage1016/mask/internal/app/pharmacy/model"
 	"github.com/cage1016/mask/internal/pkg/errors"
 	"github.com/cage1016/mask/internal/pkg/level"
-	"github.com/cage1016/mask/internal/pkg/util"
+	"github.com/go-kit/kit/log"
 )
 
-var l log.Logger
-
 var (
-	ErrInvalidTask        = errors.New("Bad Request - Invalid Task")
-	ErrCloudTaskNewClient = errors.New("task new client failed")
-	ErrTaskCreatFailed    = errors.New("task create failed")
-	ErrMalformedEntity    = errors.New("malformed entity specification")
-	ErrStorageNewClient   = errors.New("storage new client failed")
-	ErrStorageReadObject  = errors.New("storage read object failed")
+	ErrInvalidTask     = errors.New("Bad Request - Invalid Task")
+	ErrTaskCreatFailed = errors.New("task create failed")
+	ErrMalformedEntity = errors.New("malformed entity specification")
 )
 
 const newLayout = "15:04"
@@ -41,233 +25,52 @@ type Middleware func(PharmacyService) PharmacyService
 type PharmacyService interface {
 	// [method=post,expose=true,router=api/pharmacies]
 	Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, seLng float64, seLat float64, swLng float64, swLat float64, nwLng float64, nwLat float64, max uint64) (items []model.Pharmacy, err error)
-	// [method=post,expose=true,router=api/pharmacies/footgun]
-	FootGun(ctx context.Context) (err error)
-	// [method=post,expose=true,router=api/pharmacies/sync]
-	Sync(ctx context.Context) (err error)
-	// [method=post,expose=true,router=api/pharmacies/sync_handler]
-	SyncHandler(ctx context.Context, queueName string, taskName string) (err error)
-	// [method=get,expose=true,router=api/pharmacies/health_check]
-	HealthCheck(ctx context.Context) (updated string, err error)
+	// [expose=false]
+	TickerUpdate(ctx context.Context) (err error)
 }
 
 // the concrete implementation of service interface
 type stubPharmacyService struct {
-	logger           log.Logger
-	repo             model.PharmacyRepository
-	projectID        string
-	locationID       string
-	queueID          string
-	bucketID         string
-	pointsObjectName string
+	logger              log.Logger
+	repo                model.PharmacyRepository
+	latestPharmacyTable string
 }
 
 // New return a new instance of the service.
 // If you want to add service middleware this is the place to put them.
-func New(repo model.PharmacyRepository, projectID, LocationID, QueueID, BucketID, PointsObjectName string, logger log.Logger) (s PharmacyService) {
+func New(repo model.PharmacyRepository, logger log.Logger) (s PharmacyService) {
 	var svc PharmacyService
 	{
-		l = logger
-		svc = &stubPharmacyService{repo: repo, logger: logger, projectID: projectID, locationID: LocationID, queueID: QueueID, bucketID: BucketID, pointsObjectName: PointsObjectName}
+		svc = &stubPharmacyService{repo: repo, logger: logger}
 		svc = LoggingMiddleware(logger)(svc)
 	}
 	return svc
 }
 
-// Implement the business logic of Query
-func (st *stubPharmacyService) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, _ float64, _ float64, swLng float64, swLat float64, _ float64, _ float64, max uint64) (items []model.Pharmacy, err error) {
-	return st.repo.Query(ctx, centerLng, centerLat, swLng, neLng, swLat, neLat, max)
+// Implement the business logic of TickerUpdate
+func (as *stubPharmacyService) TickerUpdate(ctx context.Context) (err error) {
+	return as._GetLatestPharmacyTableName(ctx)
 }
 
-// Implement the business logic of FootGun
-func (ph *stubPharmacyService) FootGun(ctx context.Context) (err error) {
-	return ph.repo.FootGun(ctx)
-}
-
-// Implement the business logic of Sync
-func (st *stubPharmacyService) Sync(ctx context.Context) (err error) {
-	taskClient, err := cloudtasks.NewClient(ctx)
+func (as *stubPharmacyService) _GetLatestPharmacyTableName(ctx context.Context) (err error) {
+	t, err := as.repo.GetLatestPharmacyTableName(ctx)
 	if err != nil {
-		level.Error(st.logger).Log("method", "cloudtasks.NewClient", "err", err)
-		return errors.Wrap(ErrCloudTaskNewClient, err)
+		level.Error(as.logger).Log("method", "as.repo.GetLatestPharmacyTableName", "err", err)
 	}
-	defer taskClient.Close()
+	as.latestPharmacyTable = t
 
-	// Build the Task queue path.
-	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", st.projectID, st.locationID, st.queueID)
-
-	// Build the Task payload.
-	// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#CreateTaskRequest
-	req := &taskspb.CreateTaskRequest{
-		Parent: queuePath,
-		Task: &taskspb.Task{
-			// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#AppEngineHttpRequest
-			MessageType: &taskspb.Task_AppEngineHttpRequest{
-				AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
-					HttpMethod:  taskspb.HttpMethod_POST,
-					RelativeUri: "/api/pharmacies/sync_handler",
-				},
-			},
-		},
-	}
-
-	createdTask, err := taskClient.CreateTask(ctx, req)
-	if err != nil {
-		level.Error(st.logger).Log("method", "taskClient.CreateTask", "err", err)
-		return errors.Wrap(ErrTaskCreatFailed, err)
-	}
-
-	level.Info(st.logger).Log("method", "taskClient.CreateTask", "task", createdTask)
-	return nil
-}
-
-// Implement the business logic of SyncHandler
-func (st *stubPharmacyService) SyncHandler(ctx context.Context, queueName string, taskName string) (err error) {
-	level.Info(st.logger).Log("method", "SyncHandler start", "queue", queueName, "task", taskName)
-	// Creates a client.
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		level.Error(st.logger).Log("method", "storage.NewClient", "err", err)
-		return errors.Wrap(ErrStorageNewClient, err)
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, time.Second*50)
-	defer cancel()
-
-	rc, err := client.Bucket(st.bucketID).Object(st.pointsObjectName).NewReader(ctx)
-	if err != nil {
-		level.Error(st.logger).Log("method", `client.Bucket(BucketID).Object("/points.json").NewReader(ctx)`, "err", err)
-		return errors.Wrap(ErrStorageReadObject, err)
-	}
-	defer rc.Close()
-
-	var req Collection
-	err = json.NewDecoder(rc).Decode(&req)
-	if err != nil {
-		level.Error(st.logger).Log("method", "json.NewDecoder(rc).Decode(&req)", "err", err)
-		return errors.Wrap(ErrMalformedEntity, err)
-	}
-
-	var updated string
-	pharmacies := make(model.Pharmacies, len(req.Features))
-	for i, f := range req.Features {
-		if updated == "" {
-			if f.Properties.Updated.Valid {
-				updated = f.Properties.Updated.Time.In(util.Location).Format("2006_0102_150405")
-			}
-		}
-		pharmacy := model.Pharmacy{
-			Id:             f.Properties.Id,
-			Name:           f.Properties.Name,
-			Phone:          f.Properties.Phone,
-			Address:        f.Properties.Address,
-			MaskAdult:      f.Properties.MaskAdult,
-			MaskChild:      f.Properties.MaskChild,
-			Updated:        f.Properties.Updated,
-			Available:      f.Properties.Available,
-			CustomNote:     f.Properties.CustomNote,
-			Website:        f.Properties.Website,
-			Note:           f.Properties.Note,
-			Longitude:      f.Geometry.Coordinates[0],
-			Latitude:       f.Geometry.Coordinates[1],
-			ServicePeriods: f.Properties.ServicePeriods,
-			ServiceNote:    f.Properties.ServiceNote,
-			County:         f.Properties.County,
-			Town:           f.Properties.Town,
-			Cunli:          f.Properties.Cunli,
-		}
-		pharmacies[i] = pharmacy
-	}
-
-	err = st.repo.Insert(ctx, updated, pharmacies.Split(500))
-	if err != nil {
-		level.Error(st.logger).Log("method", "st.repo.Insert", "queue", queueName, "task", taskName, "err", err)
-	} else {
-		level.Info(st.logger).Log("method", "st.repo.Insert", "queue", queueName, "task", taskName)
-	}
+	as.logger.Log("latestPharmacyTable", t)
 	return err
 }
 
-func (st *stubPharmacyService) HealthCheck(ctx context.Context) (string, error) {
-	now := time.Now().In(util.Location)
-	ns, _ := time.Parse(newLayout, strconv.Itoa(now.Hour())+":"+strconv.Itoa(now.Minute()))
-	srt, _ := time.Parse(newLayout, "23:00")
-	end, _ := time.Parse(newLayout, "07:00")
-	if inTimeSpan(srt, end, ns) {
-		return "ok", nil
-	}
-	return st.repo.Latest(ctx)
-}
-
-func inTimeSpan(start, end, check time.Time) bool {
-	if start.Before(end) {
-		return !check.Before(start) && !check.After(end)
-	}
-	if start.Equal(end) {
-		return check.Equal(start)
-	}
-	return !start.After(check) || !end.Before(check)
-}
-
-type Properties struct {
-	Id             string       `json:"id"`
-	Name           string       `json:"name"`
-	Phone          string       `json:"phone"`
-	Address        string       `json:"address"`
-	MaskAdult      uint64       `json:"mask_adult"`
-	MaskChild      uint64       `json:"mask_child"`
-	Updated        *pq.NullTime `json:"updated"`
-	Note           string       `json:"note"`
-	Available      string       `json:"available"`
-	CustomNote     string       `json:"custom_note"`
-	Website        string       `json:"website"`
-	ServicePeriods string       `json:"service_periods"`
-	ServiceNote    string       `json:"service_note"`
-	County         string       `json:"county"`
-	Town           string       `json:"town"`
-	Cunli          string       `json:"cunli"`
-}
-
-// UnmarshalJSON means to unmarshal json to object.
-func (p *Properties) UnmarshalJSON(data []byte) error {
-	type Alias Properties
-
-	pr := &struct {
-		Updated string `json:"updated"`
-		*Alias
-	}{
-		Alias: (*Alias)(p),
-	}
-
-	if err := json.Unmarshal(data, &pr); err != nil {
-		level.Warn(l).Log("method", "json.Unmarshal", "err", err, "properties", fmt.Sprintf("%+v", p))
-		return nil
-	}
-
-	if pr.Updated != "" {
-		expired, err := time.ParseInLocation("2006/01/02 15:04:05", pr.Updated, util.Location)
+// Implement the business logic of Query
+func (st *stubPharmacyService) Query(ctx context.Context, centerLng float64, centerLat float64, neLng float64, neLat float64, _ float64, _ float64, swLng float64, swLat float64, _ float64, _ float64, max uint64) (items []model.Pharmacy, err error) {
+	if st.latestPharmacyTable == "" {
+		err := st._GetLatestPharmacyTableName(ctx)
 		if err != nil {
-			return err
-		}
-
-		p.Updated = &pq.NullTime{
-			Time:  expired,
-			Valid: true,
+			return []model.Pharmacy{}, err
 		}
 	}
 
-	return nil
-}
-
-type Features struct {
-	Type       string     `json:"type"`
-	Properties Properties `json:"properties"`
-	Geometry   struct {
-		Coordinates []float64 `json:"coordinates"`
-	} `json:"geometry"`
-}
-
-type Collection struct {
-	Type     string     `json:"type"`
-	Features []Features `json:"features"`
+	return st.repo.Query(ctx, st.latestPharmacyTable, centerLng, centerLat, swLng, neLng, swLat, neLat, max)
 }
