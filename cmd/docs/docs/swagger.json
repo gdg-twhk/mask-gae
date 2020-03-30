@@ -276,6 +276,34 @@
                     }
                 }
             }
+        },
+        "/api/pharmacies/health_check": {
+            "get": {
+                "description": "The endpoint for Mask health check\n07-23 will return the lastest pharmacy update time, other wise will return ok",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pharmacy"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/endpoints.HealthCheckResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ErrorRes"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -334,6 +362,14 @@
                 }
             }
         },
+        "endpoints.HealthCheckResponse": {
+            "type": "object",
+            "properties": {
+                "updated": {
+                    "type": "string"
+                }
+            }
+        },
         "endpoints.LatLng": {
             "type": "object",
             "properties": {
@@ -386,19 +422,7 @@
         "errors.Errors": {
             "type": "object",
             "properties": {
-                "domain": {
-                    "type": "string"
-                },
-                "location": {
-                    "type": "string"
-                },
-                "locationType": {
-                    "type": "string"
-                },
                 "message": {
-                    "type": "string"
-                },
-                "reason": {
                     "type": "string"
                 }
             }

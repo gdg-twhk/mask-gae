@@ -18,23 +18,12 @@ Content-Type: application/json
 
 < ./test.json
 
-### pharmacies
-POST https://xxx-dot-pharmacy-dot-mask-9999.appspot.com/api/pharmacies  HTTP/1.1
-Content-Type: application/json
-
-< ./test.json
-
 
 ### sync 
 POST https://mask-9999.appspot.com/api/pharmacies/sync HTTP/1.1
 
-###
-GET https://mask-9999.appspot.com/api/pharmacies/health_check HTTP/1.1
-
 ### sync handler
 POST https://mask-9999.appspot.com/api/pharmacies/sync_handler HTTP/1.1
-
-### sync handler2
-POST https://xx-dot-sync-dot-mask-9999.appspot.com/api/pharmacies/sync_handler HTTP/1.1
+X-Appengine-Taskname:[]
 
 ###

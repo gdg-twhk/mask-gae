@@ -42,6 +42,52 @@ func QueryHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptran
 	))
 
 }
+func SyncHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/pharmacies/sync", httptransport.NewServer(
+		endpoints.SyncEndpoint,
+		decodeHTTPSyncRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+func SyncHandlerHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/pharmacies/sync_handler", httptransport.NewServer(
+		endpoints.SyncHandlerEndpoint,
+		decodeHTTPSyncHandlerRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+func FootGunHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Post("/api/pharmacies/footgun", httptransport.NewServer(
+		endpoints.FootGunEndpoint,
+		decodeHTTPFootGunRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+
+}
+
+// ShowPharmacy godoc
+// @Summary
+// @Description The endpoint for Mask health check
+// @Description 07-23 will return the lastest pharmacy update time, other wise will return ok
+// @Tags pharmacy
+// @Accept json
+// @Produce json
+// @Success 200 {object} endpoints.HealthCheckResponse
+// @Failure 500 {object} responses.ErrorRes
+// @Router /api/pharmacies/health_check [get]
+func HealthCheckHandler(m *bone.Mux, endpoints endpoints.Endpoints, options []httptransport.ServerOption, logger log.Logger) {
+	m.Get("/api/pharmacies/health_check", httptransport.NewServer(
+		endpoints.HealthCheckEndpoint,
+		decodeHTTPHealthCheckRequest,
+		encodeJSONResponse,
+		append(options, httptransport.ServerBefore(kitjwt.HTTPToContext()))...,
+	))
+}
 
 // NewHTTPHandler returns a handler that makes a set of endpoints available on
 // predefined paths.
@@ -53,6 +99,10 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 
 	m := bone.New()
 	QueryHandler(m, endpoints, options, logger)
+	SyncHandler(m, endpoints, options, logger)
+	SyncHandlerHandler(m, endpoints, options, logger)
+	FootGunHandler(m, endpoints, options, logger)
+	HealthCheckHandler(m, endpoints, options, logger)
 	return cors.AllowAll().Handler(m)
 }
 
@@ -62,6 +112,52 @@ func decodeHTTPQueryRequest(_ context.Context, r *http.Request) (interface{}, er
 	var req endpoints.QueryRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
+}
+
+// decodeHTTPSyncRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPSyncRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.SyncRequest
+	//err := json.NewDecoder(r.Body).Decode(&req)
+	return req, nil
+}
+
+// decodeHTTPSyncHandlerRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPSyncHandlerRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.SyncHandlerRequest
+	//
+	//t, ok := r.Header["X-Appengine-Taskname"]
+	//if !ok || len(t[0]) == 0 {
+	//	// You may use the presence of the X-Appengine-Taskname header to validate
+	//	// the request comes from Cloud Tasks.
+	//	return nil, service.ErrInvalidTask
+	//}
+	//
+	//// Pull useful headers from Task request.
+	//q, ok := r.Header["X-Appengine-Queuename"]
+	//if ok {
+	//	req.TaskName = q[0]
+	//}
+	//
+	//req.TaskName = t[0]
+	return req, nil
+}
+
+// decodeHTTPFootGunRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPFootGunRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.FootGunRequest
+	//err := json.NewDecoder(r.Body).Decode(&req)
+	return req, nil
+}
+
+// decodeHTTPHealthCheckRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded request from the HTTP request body. Primarily useful in a server.
+func decodeHTTPHealthCheckRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.HealthCheckRequest
+	//err := json.NewDecoder(r.Body).Decode(&req)
+	return req, nil
 }
 
 func httpEncodeError(_ context.Context, err error, w http.ResponseWriter) {

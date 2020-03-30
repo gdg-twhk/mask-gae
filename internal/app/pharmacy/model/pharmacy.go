@@ -10,6 +10,8 @@ import (
 	"github.com/cage1016/mask/internal/pkg/util"
 )
 
+var location *time.Location
+
 type Pharmacies []Pharmacy
 
 func (p Pharmacies) Split(limit int) [][]Pharmacy {
@@ -65,6 +67,8 @@ func (p *Pharmacy) MarshalJSON() ([]byte, error) {
 }
 
 type PharmacyRepository interface {
-	Query(context.Context, string, float64, float64, float64, float64, float64, float64, uint64) ([]Pharmacy, error)
-	GetLatestPharmacyTableName(context.Context) (string, error)
+	Query(context.Context, float64, float64, float64, float64, float64, float64, uint64) ([]Pharmacy, error)
+	Insert(context.Context, string, [][]Pharmacy) error
+	FootGun(ctx context.Context) error
+	Latest(context.Context) (string, error)
 }
