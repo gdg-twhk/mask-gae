@@ -1,0 +1,56 @@
+steps:
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - kms
+      - decrypt
+      - --ciphertext-file=id_rsa.enc
+      - --plaintext-file=/root/.ssh/id_rsa
+      - --location=global
+      - --keyring=my-keyring
+      - --key=github-key
+    volumes:
+      - name: ssh
+        path: /root/.ssh
+
+  - name: gcr.io/cloud-builders/git
+    entrypoint: bash
+    args:
+      - -exc
+      - |
+        chmod 600 /root/.ssh/id_rsa
+        cat <<EOF >/root/.ssh/config
+        Hostname github.com
+        IdentityFile /root/.ssh/id_rsa
+        EOF
+        mv known_hosts /root/.ssh/known_hosts
+    volumes:
+      - name: ssh
+        path: /root/.ssh
+
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -exc
+      - |
+        # Cloud Build x GitHub integration uses source archives to fetch
+        # the source, rather than Git source fetching, and as a consequence
+        # does not include the .git/ directory. As a workaround, we clone
+        # the repository and reset it to this build's commit sha.
+        git clone 'git@github.com:cage1016/mask-gae.git' tmp
+        mv tmp/.git .git
+        rm -rf tmp
+        git config user.email $(gcloud auth list --filter=status:ACTIVE --format='value(account)')
+        git reset "$COMMIT_SHA"
+    volumes:
+      - name: ssh
+        path: /root/.ssh
+
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -exc
+      - |
+        sed -i -e 's/min_idle_instances: automatic/min_idle_instances: 3/g' cmd/pharmacy/app.yaml
+        sed -i -e 's/min_instances: 0/min_instances: 3/g' cmd/pharmacy/app.yaml
+        gcloud app deploy --version=$COMMIT_SHA cmd/pharmacy/app.yaml -q
+        echo "deploy succeeded."

@@ -53,6 +53,9 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 
 	m := bone.New()
 	QueryHandler(m, endpoints, options, logger)
+	m.GetFunc("/_ah/warmup", func(w http.ResponseWriter, r *http.Request) {
+		logger.Log("/_ah/warmup", "done")
+	})
 	return cors.AllowAll().Handler(m)
 }
 
