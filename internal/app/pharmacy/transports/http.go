@@ -56,6 +56,9 @@ func NewHTTPHandler(endpoints endpoints.Endpoints, logger log.Logger) http.Handl
 	m.GetFunc("/_ah/warmup", func(w http.ResponseWriter, r *http.Request) {
 		logger.Log("/_ah/warmup", "done")
 	})
+	m.GetFunc("/api/pharmacies/health_check", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
 	return cors.AllowAll().Handler(m)
 }
 
