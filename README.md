@@ -1,7 +1,33 @@
 # mask.goodideas-studio.com 後台
 
-## update frontend
+```yaml
+dispatch:
+  - url: "*/favicon.ico"
+    module: default
 
-- 替換 `frontend/build` 下所有檔案
-- 修改 `makefile` `ACCOUNT` 為有權限的帳號
-- 執行 `make update_frontend`
+  - url: "*/api/pharmacies*"
+    module: pharmacy
+
+  - url: "*/docs*"
+    module: docs
+
+  - url: "*/api/feedback*"
+    module: feedback
+
+  - url: "*/googleae8f4bcce8bec00c.html"
+    module: ownership
+
+  - url: "mask-9999.appspot.com/"
+    module: default
+```
+
+```shell script
+$ make
+Usage:
+
+  deploy_pharmacy [v=version-name]   deploy pharmacy service
+  deploy_docs [v=version-name]       deploy docs service
+  deploy_feedback [v=version-name]   deploy feedback service
+  deploy_dispatch                    deploy disptach
+  build_swagger                      generate swagger docs
+```
