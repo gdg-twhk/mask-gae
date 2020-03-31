@@ -10,11 +10,8 @@ handlers:
   secure: always
 
 env_variables:
-  MASK_FEEDBACK_DB_HOST: /cloudsql/mask-9999:asia-east2:health-insurance-special-pharmacy
+  MASK_FEEDBACK_DB_HOST: mask-9999:asia-east2:health-insurance-special-pharmacy
   MASK_FEEDBACK_DB_PORT: 5432
   MASK_FEEDBACK_DB_USER: postgres
   MASK_FEEDBACK_DB_PASS: password
   MASK_FEEDBACK_DB: mask
-
-beta_settings:
-  cloud_sql_instances: mask-9999:asia-east2:health-insurance-special-pharmacy

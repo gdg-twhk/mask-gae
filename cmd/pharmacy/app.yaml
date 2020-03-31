@@ -21,7 +21,7 @@ handlers:
     secure: always
 
 env_variables:
-  DB_HOST: /cloudsql/mask-9999:asia-east2:health-insurance-special-pharmacy
+  DB_HOST: mask-9999:asia-east2:health-insurance-special-pharmacy
   DB_PORT: 5432
   DB_USER: postgres
   DB_PASS: password
