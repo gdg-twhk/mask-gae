@@ -50,5 +50,5 @@ steps:
     args:
       - -exc
       - |
-        gcloud app deploy --version=$COMMIT_SHA cmd/pharmacy/app.yaml -q
+        gcloud app deploy --version=$SHORT_SHA cmd/pharmacy/app.yaml -q
         echo "deploy succeeded."

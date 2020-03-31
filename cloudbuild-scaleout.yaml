@@ -52,5 +52,5 @@ steps:
       - |
         sed -i -e 's/min_idle_instances: automatic/min_idle_instances: 3/g' cmd/pharmacy/app.yaml
         sed -i -e 's/min_instances: 0/min_instances: 3/g' cmd/pharmacy/app.yaml
-        gcloud app deploy --version=$COMMIT_SHA cmd/pharmacy/app.yaml -q
+        gcloud app deploy --version=$SHORT_SHA cmd/pharmacy/app.yaml -q
         echo "deploy succeeded."
