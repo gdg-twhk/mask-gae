@@ -1,4 +1,18 @@
-# mask.goodideas-studio.com 後台
+<h1 align="center">Welcome to mask-gae 👋</h1>
+<p>
+  <a href="https://github.com/gdg-twhk/mask-gae/blob/master/LICENSE" target="_blank">
+    <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" />
+  </a>
+  <a href="https://twitter.com/CageChung" target="_blank">
+    <img alt="Twitter: CageChung" src="https://img.shields.io/twitter/follow/CageChung.svg?style=social" />
+  </a>
+</p>
+
+> mask.goodideas-studio.com backend API
+
+## Usage
+
+_dispatch.yaml_
 
 ```yaml
 dispatch:
@@ -31,3 +45,22 @@ Usage:
   deploy_dispatch                    deploy disptach
   build_swagger                      generate swagger docs
 ```
+
+## Author
+
+👤 **Kai-Chu Chung**
+
+* Website: https://kaichu.io/
+* Github: [@cage1016](https://github.com/cage1016)
+
+## Show your support
+
+Give a ⭐️ if this project helped you!
+
+## 📝 License
+
+Copyright © 2020 [gdg-twhk](https://github.com/gdg-twhk).<br />
+This project is [MIT](https://github.com/gdg-twhk/mask-gae/blob/master/LICENSE) licensed.
+
+***
+_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
